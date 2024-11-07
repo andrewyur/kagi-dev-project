@@ -32,7 +32,7 @@ Routing structure:
 ## Roadmap
 
 - [x] Setup flask server
-  - [ ] Setup blueprints for each routing section
+  - [x] Setup blueprints for each routing section
 - [ ] add main functionality
   - [ ] make rss feeds return data from pocketbase
   - [ ] make rss editor
@@ -59,5 +59,3 @@ TODO: when this is finally finished and deployed, it would be a good test to see
 to maximize the simplicity of this app, the user should login via a modal, and not a dedicated page. this will prevent unnecessary page loads and reloads.
 
 NOTE: Jinja2 automatically escapes html when rendering variables, which is why I do not escape everything manually when rendering templates.
-
-deploying this is gonna be a real pain, so I am just worrying about getting this functionality working locally for now.
