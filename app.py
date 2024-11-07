@@ -20,11 +20,11 @@ def home(url=""):
     return render_template("input.html.jinja", url=url)
 
 
-app.register_blueprint(api_bp, prefix="/api")
-app.register_blueprint(auth_bp, prefix="/auth")
-app.register_blueprint(edit_bp, prefix="/edit")
-app.register_blueprint(rss_bp, prefix="/rss")
+app.register_blueprint(api_bp, url_prefix="/api")
+app.register_blueprint(auth_bp, url_prefix="/auth")
+app.register_blueprint(edit_bp, url_prefix="/edit")
+app.register_blueprint(rss_bp, url_prefix="/rss")
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
