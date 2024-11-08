@@ -8,16 +8,18 @@ from rss.routes import rss_bp
 app = Flask(__name__)
 
 
-# catch an url supplied to the app through the address bar
 @app.route('/')
+def input_url():
+    return render_template("input.html")
+
+# catch an url supplied to the app through the address bar
 @app.route('/http<path:url>')
-def home(url=""):
+def catch_url(url: str):
 
-    # re add the "http" stripped off by the route
-    if len(url) > 0:
-        url = f"http{url}"
+    # add back the "http" stripped off by the route selector
+    url = f"http{url}"
 
-    return render_template("input.html.jinja", url=url)
+    # redirect to edit page
 
 
 app.register_blueprint(api_bp, url_prefix="/api")

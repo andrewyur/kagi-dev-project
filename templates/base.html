@@ -5,11 +5,51 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>RSS Converter</title>
-        <link rel="stylesheet" href="static/index.css" />
+        <style>
+            /* adapted from vite's template css file */
+            :root {
+                font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+                line-height: 1.5;
+                font-weight: 400;
+
+                --background: #242424;
+                --text: rgba(255, 255, 255, 0.87);
+                --accent: #a16767;
+
+                color-scheme: light dark;
+                color: var(--text);
+                background-color: var(--background);
+
+                font-synthesis: none;
+                text-rendering: optimizeLegibility;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                display: flex;
+                place-items: center;
+                flex-direction: column;
+                min-width: 320px;
+                min-height: 100vh;
+            }
+
+            main {
+                max-width: 800px;
+                margin-top: 10vh;
+            }
+        </style>
         {% endblock %}
     </head>
     <body>
-        {% block content %}{% endblock %}
+        <main>
+            {% block content %}{% endblock %}
+        </main>
         <!-- <script src="index.js"></script> -->
     </body>
 </html>

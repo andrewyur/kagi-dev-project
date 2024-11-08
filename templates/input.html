@@ -1,5 +1,74 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1>Testing!</h1>
-    <p>given url: {{ url }}</p>
+    <h1>Website to RSS Converter</h1>
+   
+    <div id="url-input-div">
+        <form action="/edit" method="get">
+            <!-- I know you need labels for forms for accessibility purposes, but it will be impossible to make the feed editor accessible, so small things like this do not matter -->
+            <input type="text" id="url-input" name="url-input" placeholder="website url">
+            <button type="submit">Convert</button>
+        </form>
+        <p id="tip">TIP: <span>rssc.baetylboy.biz/&lt;URL&gt;</span> works too! </p>
+    </div>
+
+    <p>There are a lot of websites that post regular content, but do not have RSS feeds. This application scrapes article information from the menu url you give it, and uses it to build an rss feed.</p>
+
+    <p>Submitting a url, or prepending "rssc.baetylboy.biz/" to the url in the address bar will bring you to a page where you can select which elements of the page constitute the RSS feed.</p>
+{% endblock %}
+
+{% block head %}
+{{ super() }}
+
+<style>
+    #url-input-div {
+        margin-top: 5vh;
+        margin-bottom: 5vh;
+        margin-left: -5vw;
+        margin-right: -5vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border-radius: 5vh;
+        padding: 5vh;
+        background-color: var(--accent);
+        gap: 10px;
+    }
+
+    form {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px
+    }
+
+    form > * {
+        font-size: 1.3em;
+        height: 7vh;
+        border-radius: 0.5rem;
+    }
+
+    #url-input {
+        padding: 1rem;
+        width: 30vw;
+    }
+
+    button {
+        width: 7.5vw;
+        min-width: max-content;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    #tip {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    span {
+        font-weight: bold;
+        color: #fff;
+    }
+</style>
+
+
 {% endblock %}
