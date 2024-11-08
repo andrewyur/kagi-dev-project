@@ -38,18 +38,10 @@
                 min-width: 320px;
                 min-height: 100vh;
             }
-
-            main {
-                max-width: 800px;
-                margin-top: 10vh;
-            }
         </style>
         {% endblock %}
     </head>
     <body>
-        <main>
-            {% block content %}{% endblock %}
-        </main>
-        <!-- <script src="index.js"></script> -->
+        {% block content %}{% endblock %}
     </body>
 </html>

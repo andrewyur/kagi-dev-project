@@ -4,19 +4,28 @@ By: Andrew Yurovchak
 
 ## How to run
 
+To run in development mode:
+
+- activate the shell with `nix develop`
+  - or if you dont have nix, install a recent version of python and pocketbase
+  - then run `python -m venv .venv`, `source .venv/bin/activate`, and `pip install -r requirements.txt`
+- run `python3 app.py` to start the development server
+
+To run in production mode:
+
 `nix flake prod` <!--or whatever-->
 
 ## Design Outline
 
 The majority of the function of this app will happen on the backend. I will be using python & flask for the backend of this project for 4 reasons:
 
-The frontend will likely be built around a templating engine for displaying data. I will be using Jinja2, which is built into flask. However, a small amount of JS will likely be needed for session management, and for this i will probably be just sending plain js files.
-
 - It is easy to write, and easy to read (for simple code)
 - This is not an application where performance is critical
   - If I write my code well it will be fast enough
 - I already know python, and how to use Flask
 - It is fun to write
+
+The frontend will likely be built around a templating engine for displaying data. I will be using Jinja2, which is built into flask. However, a small amount of JS will likely be needed for session management, and for this i will probably be just sending plain js files.
 
 To persist data, I will likely be using a self hosted instance of PocketBase, which is a free, open-source NoSQL database with built in authentication. I will be running this locally inside the same docker image as my backend, which eliminates the hassle of cross-container communication.
 
@@ -46,7 +55,6 @@ data schema:
   // these are static rss channel components that dont change
   "channel": { 
     "title": "venki.dev notes",
-    "language": "en-us",
     "description": "items from venki.dev/notes"
   },
   // common prefix to all rss item queries
@@ -61,11 +69,11 @@ data schema:
         "query": " > a",
         "attribute": "href"
     },
-    "pubDate": {            // required
+    "pubDate": {            // optional
         "query": " > p",
         "attribute": "textContent"
     },
-    // "descrption": {         optional
+    // "descrption": {      // optional
     //   "query": 
     //   "attribute": 
     // }
@@ -83,10 +91,14 @@ data schema:
     - [x] make a single endpoint that will display a single rss feed, with dummy data in the defined schema
     - [ ] get pocketbase working, and pull in data from pocketbase for each route
   - [ ] make rss editor
-    - [ ] make an html element selector from iframe
-      - [ ] make another screen optional to it that allows the user to select via css queries
-    - [ ] make a static compnents editor
-    - [ ] make an attribute editor
+    - [x] initial screen layout
+    - [x] make an html element selector from iframe
+    - [ ] make a screen for user to edit values directly
+      - [ ] input element have checks when filled, css is invisible
+      - [ ] no need for base query, even in schema, user should use the double selector for everything
+      - [ ] red and green should clear after blue has been selected
+    - [ ] help modals
+    - [ ] get rid of layout forcing that causes unstyled content to be shown
     - [ ] submit button & add data into pocketbase
   - [ ] use LLM API to construct an initial RSS feed to load into the editor
   - [ ] implement caching for each rss feed
@@ -102,6 +114,7 @@ data schema:
 - [ ] Configure everything for prod
 - [ ] deploy to cloud
 - [ ] test with RSS reader
+- [ ] extra feature: atom feed compatibility
 
 ## Development Notes
 
@@ -128,3 +141,11 @@ since the method for identifying item attributes relies on css selectors, you ha
 I decided to do all the css as style elements in the head of the html page. It seemed a lot easier this way, than having to wrangle separate css files for every page. The template engine makes it very easy to make the css modular, so that the browser is loading only the css necessary for the current page.
 
 I am not a css wizard, and unfortunately firefox does not have any tools to test the webpage at different desktop resolutions other than shrinking the screen. The website looks good on my machine, and all of the ones I have at my disposal to test it with, but it may not look good on yours.
+
+For the same reason I wrote all the CSS as style tags in the various templates, I will be writing all of the JS as script tags.
+
+Because iframe limits interactions to the same-origin policy (meaning I cannot access the document of the other page unless it was loaded from the same origin), I will be making a proxy page that processes the html and strips it of any js, and then serves it as if it were its own. This way, when I load the content in my iframe, I can load the document as if it were from my own domain. This presents a couple security problems, but hopefully they can be solved by restricting CORS or adding authentication to the page.
+
+It is unfortunately going to be very impractical to completely replicate a webpage using my proxy page, because webpages these days come in so many pieces, and the links that refer the browser to them are often relative, and are scattered all throughout each others contents. To make a webpage rendered via proxy look exactly like the real thing, I would have to search through every asset file for relative links, and replace them on the server side, which is quite a hassle. The webpages look mostly similar, off except for a font or a broken image here or there, and that is good enough for my purposes.
+
+looking back, it probably would have been a good idea to use some kind of framework, at least for the rss editor, because the code is getting very cluttered and hard to read...

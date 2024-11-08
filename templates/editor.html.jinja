@@ -1,0 +1,483 @@
+{% extends "base.html.jinja" %}
+
+{% macro field(name, label, description, required=True, readonly=False) %}
+   <label for="{{ name }}" title="{{ description }}">{{ label }}
+      <span class="tooltip">?</span>
+   </label>
+   <input id="{{ name }}" name="{{ name }}" type="text" 
+   {% if required %} required {% endif %}
+   {% if readonly %} readonly {% endif %}
+   />
+{% endmacro %}
+
+{% macro select_field(name, label, description, required=True) %}
+   <label for="{{ name }}" title="{{ description }}">{{ label }}
+      <span class="tooltip" >?</span>
+   </label>
+   <select id="{{ name }}" name="{{ name }}"
+   {% if required %} required {% endif %}
+   ></select>
+{% endmacro %}
+
+{% macro item_field(item_name, item_label, required=True) %}
+   {{ field("item-" ~ item_name ~ "-query", "CSS Query", "A CSS query that, when added to the end of the base CSS query, will return the HTML element that contains the " ~ item_label ~ " of each RSS item.", required=required) }}
+   {{ select_field("item-" ~ item_name ~ "-attribute", "HTML Attribute", "The attribute of the selected HTML item that contains the " ~ item_label ~ " of each RSS item.", required=required) }}
+{% endmacro %}
+
+{% block content %}
+{{ super() }}
+
+<div id="pane-container">
+   <div id="element-pane">
+      <iframe id="selector">
+      </iframe>
+      <div id="element-aggregator">
+         <p>First Element</p> <div id="first-key"></div>
+         <p>Second Element</p> <div id="second-key"></div>
+         <p>List Element</p> <div id="list-key"></div>
+         <button id="fill">Fill</button> <button id="reset">Reset</button>
+      </div>
+   </div>
+   <div id="feed-constructor">
+      <form action="/edit/create_feed" method="post">
+         <fieldset id="channel-fieldset">
+            <legend>Channel Attributes</legend>
+            <div class="fieldset-item-container">
+               {{ field("channel-title", "Title", "The title of the RSS channel") }}
+               {{ field("channel-description", "Description", "The description of the RSS channel") }}
+            </div>
+         </fieldset>
+         <fieldset id="item-fieldset">
+            <legend>Item Attributes</legend>
+            <div class="fieldset-item-container">
+               {{ field("base_query", "List Element Query", "A CSS query that returns the list of HTML elements you want represented as RSS items", readonly=True) }}
+            </div>
+            <fieldset id="title-fieldset">
+               <legend>Title</legend>
+               <div class="fieldset-item-container">
+                  {{ item_field("title", "title") }}
+               </div>
+            </fieldset>
+            <fieldset id="link-fieldset">
+               <legend>Link</legend>
+               <div class="fieldset-item-container">
+                  {{ item_field("link", "URL") }}
+               </div>
+            </fieldset>
+            <fieldset id="pubDate-fieldset">
+               <legend>Publication Date</legend>
+               <div class="fieldset-item-container">
+                  {{ item_field("pubDate", "publication date", required=False) }}
+               </div>
+            </fieldset>
+            <fieldset id="description">
+               <legend>Description</legend>
+               <div class="fieldset-item-container">
+                  {{ item_field("description", "description", required=False) }}
+               </div>
+            </fieldset>
+         </fieldset>
+         <button type="submit">Create</button>
+      </form>
+   </div>
+</div>
+
+<dialog id="error-modal">
+   <p id="error-message"></p>
+   <a href="/">Choose another url</a>
+</dialog>
+
+<dialog id="instructions-modal">
+   <p>This is the editor screen.</p>
+
+   <p>hover over a part of your selected webpage to see its element in the attribute pane.</p>
+   <p>Click on the element to select it, and then choose an attribute to load as the selected RSS component in the feed constructor.</p>
+   <p>You can edit static values like the title and description of the RSS feed by typing directly in the feed editor.</p>
+</dialog>
+
+<dialog id="list-instructions-modal">
+
+</dialog>
+
+<dialog id="item-instructions-modal">
+
+</dialog>
+
+<script>
+   // selection process flow: 
+
+   // user reads info & instructions popup
+   // user fills in channel attributes
+   // user selects the list element query
+      // user selects the first element
+      // user selects the second element
+      // user confirms the fill or resets
+   // user selects the other item queries and css attributes 
+
+
+   class Highlighter {
+      static red = "#ff0000"
+      static blue = "#00ff00"
+      static green = "#0000ff"
+
+      constructor(styleElement) {
+         this.styleElement = styleElement
+         this.highlightedElements = []
+      }
+
+      _updateHighlighted() {
+         const cssList = this.highlightedElements.map((el) => {
+            return `${el.query} { background-color: ${el.color}; }`
+         })
+
+         this.styleElement.innerText = cssList.join(" ")
+
+         console.log(cssList.join(" "))
+      }
+
+      highlightElement(query, color) {
+         this.highlightedElements = this.highlightedElements.filter((obj) => obj.color != color)
+         this.highlightedElements.push({query, color})
+         this._updateHighlighted()
+
+         {# console.log(this.highlightedElements) #}
+      }
+
+      clearAllHighlights() {
+         this.highlightedElements = []
+         this.styleElement.innerText = ""
+      }
+   }
+
+   class BaseQuerySelector {
+      inputElement = document.getElementById("base_query")
+      aggregatorElement = document.getElementById("element-aggregator")
+      fillButtonElement = document.getElementById("fill")
+
+      firstElement = null
+      secondElement = null
+      listElement = null
+
+      selecting = false
+
+      // selecting the 1st or 2nd element? or none?
+      _currentlySelecting = 1
+
+      constructor(highlighter) {
+         this.highlighter = highlighter
+
+         this.inputElement.addEventListener("click", () => {
+            this.start()
+         })
+
+         // add listeners to the aggregator buttons
+         this.fillButtonElement.disabled = true
+         this.fillButtonElement.addEventListener("click", () => {
+            this.inputElement.value = this.listElement
+            this.stop()
+         })
+         document.getElementById("reset").addEventListener("click", () => {
+            this.highlighter.clearAllHighlights()
+            this.firstElement = null
+            this.secondElement = null
+            this.listElement = null
+            this._currentlySelecting = 1
+            this.inputElement.value = ""
+         })
+      }
+
+      handleHover(cssQuery) {
+         if (this.selecting && this._currentlySelecting != null) {
+            let hoverColor
+
+            if(this._currentlySelecting == 1) {
+               hoverColor = Highlighter.red
+            }else if(this._currentlySelecting == 2){
+               hoverColor = Highlighter.blue
+            }
+
+            this.highlighter.highlightElement(cssQuery, hoverColor)
+         }
+      }
+
+      handleClick(cssQuery) {
+         console.log(cssQuery)
+
+         if(this.selecting) {
+            if(this._currentlySelecting == 1){
+               this.firstElement = cssQuery
+               this._currentlySelecting = 2
+               this.highlighter.highlightElement(cssQuery, Highlighter.red)
+            } else if (this._currentlySelecting == 2) {
+               this.secondElement = cssQuery
+               this._currentlySelecting = null
+               this.highlighter.highlightElement(cssQuery, Highlighter.blue)
+
+               this._calculateListSelector()
+               this.highlighter.highlightElement(this.listElement, Highlighter.green)
+               this.fillButtonElement.disabled = false
+            }
+
+            this.inputElement.focus()
+         }
+      }
+
+      start() {
+         this.aggregatorElement.style.visibility = "visible"
+         this.selecting = true
+         this.inputElement.focus()
+         this.highlighter.clearAllHighlights()
+         this.firstElement = null
+         this.secondElement = null
+         this.listElement = null
+         this._currentlySelecting = 1
+         this.inputElement.value = ""
+      }
+
+      stop() {
+         this.aggregatorElement.style.visibility = "hidden"
+         this.highlighter.clearAllHighlights()
+         this.firstElement = null
+         this.secondElement = null
+         this.listElement = null
+         this.selecting = false
+         this.inputElement.blur()
+      }
+
+      _calculateListSelector() {
+
+         let sharedAncestorEnd = Math.min(this.firstElement.length, this.secondElement.length)
+         let lastSpace = 0
+
+         for(let i = 0; i < Math.min(this.firstElement.length, this.secondElement.length); i++) {
+            if(this.firstElement.charAt(i) != this.secondElement.charAt(i)) {
+               sharedAncestorEnd = lastSpace
+               break;
+            }
+
+            if(this.firstElement.charAt(i) == " "){
+               lastSpace = i
+            }
+         }
+
+         const sharedSubstring = this.firstElement.substring(0, sharedAncestorEnd)
+         const listElementTagEndIndex = this.firstElement.substring(sharedAncestorEnd).indexOf(":") + sharedAncestorEnd
+
+         const listElementTag = this.firstElement.substring(sharedAncestorEnd, listElementTagEndIndex) 
+
+         this.listElement = sharedSubstring + listElementTag
+      }
+   }
+
+   class Iframe {
+      handle = document.getElementById("selector")
+      documentHandle = null
+      hoveredElement = null
+      highlighter = null
+      baseQuerySelector = null
+      selecting = false
+      mouseMoved = false
+
+      constructor() {
+         // parse the url from url search params and load it into the iframe 
+         const searchParams = new URLSearchParams(window.location.search)
+         
+         if(!searchParams.has("url-input")) {
+            displayError("A url was not supplied!")
+         }else{
+            const inputUrl = searchParams.get("url-input")
+            this.handle.src = `/proxy/${inputUrl}`
+         }
+
+         this.handle.addEventListener("load", () => this._initialize())
+
+         this.handle.addEventListener("mouseenter", () => this.selecting = true)
+         this.handle.addEventListener("mouseleave", () => this.selecting = false)
+
+         setInterval(this._handleHover, 25)
+      }
+
+      _initialize = () => {
+         // attach event listeners inside the document context
+
+         this.documentHandle = this.handle.contentDocument || this.handle.contentWindow.document;
+
+         this.documentHandle.body.addEventListener("mousemove", (moveEvent) => {
+            this.mouseMoved = true
+            this.hoveredElement = moveEvent.target
+         })
+
+         this.documentHandle.body.addEventListener("click", (clickEvent) => {
+            // intercept click events to the window
+            clickEvent.stopPropagation()
+            clickEvent.preventDefault()
+
+            let cssSelector = calculateCssSelector(clickEvent.target) 
+
+            if(this.baseQuerySelector.selecting) {
+               this.baseQuerySelector.handleClick(cssSelector)
+            }
+
+         }, true)
+
+         // injected style element to handle highlighting elements
+         const injectedStyle = this.documentHandle.createElement("style")
+         this.documentHandle.head.appendChild(injectedStyle)
+         this.highlighter = new Highlighter(injectedStyle)
+
+         this.baseQuerySelector = new BaseQuerySelector(this.highlighter)
+      }
+
+      _handleHover = () => {
+         // early skip to prevent dom changes when user is not actively moving their mouse around in the iframe
+         if(!this.mouseMoved || !this.selecting){
+            return
+         }
+
+         let cssSelector = calculateCssSelector(this.hoveredElement)
+
+         if(this.baseQuerySelector.selecting) {
+            this.baseQuerySelector.handleHover(cssSelector)
+         }
+
+         this.mouseMoved = false
+      }
+
+   }
+
+   function displayError(message) {
+      const errorMessage = document.getElementById("error-message")
+      errorMessage.innerText = message
+
+      const errorModal = document.getElementById("error-modal")
+      errorModal.showModal()
+   }
+
+   // based off of https://stackoverflow.com/questions/8588301/how-to-generate-unique-css-selector-for-dom-element
+   function calculateCssSelector(element) {
+      let path = [], parent
+      while (parent = element.parentNode) {
+
+         // may have to remove this part if i encounter ephemeral ids that are generated by frontend frameworks
+         if(element.id != "") {
+            path.unshift(`#${element.id}`)
+            break
+         }
+
+         // need to use Array.prototype.indexOf here bc parent.children is a NodeList, not an Array
+         elementIndex = [].indexOf.call(parent.children, element)
+
+         path.unshift(`${element.tagName}:nth-child(${elementIndex+1})`)
+         element = parent;
+      }
+
+      return `${path.join(' > ')}`.toLowerCase()
+   }
+
+   iframe = new Iframe()
+</script>
+
+{% endblock %}
+
+{% block head %}
+{{ super() }}
+
+<style>
+   #pane-container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+   }
+
+   #element-pane {
+      grid-column: 1;
+   }
+
+   #selector {
+      --scale-factor: 0.8;
+      border: none;
+      transform: scale(var(--scale-factor));
+      width: calc(1/var(--scale-factor) * 100%);
+      height: calc(1/var(--scale-factor) * 100%);
+      transform-origin: top left;
+   }
+
+   #feed-constructor {
+      grid-column: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px;
+   }
+
+   fieldset, form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 10px
+   }
+
+   .fieldset-item-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+   }
+
+   label {
+      grid-column: 1;
+   }
+
+   input, select {
+      grid-column: 2;
+   }
+
+   form button {
+      margin: 20px;
+      height: 40px;
+      width: 40%;
+   }
+
+   .tooltip {
+      scale: 0.5;
+      transform-origin: center center;
+      opacity: 0.5;
+   }
+
+   #element-aggregator {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      background-color: var(--background);
+      padding: 10px;
+      border-radius: 5px;
+      column-gap: 5px;
+      visibility: hidden;
+   }
+
+   #element-aggregator * {
+      margin: 0;
+      padding: 0;
+   }
+
+   #element-aggregator button {
+      margin-top: 10px;
+   }
+
+   #first-key {
+      background-color: #ff0000;
+   }
+   #second-key {
+      background-color: #00ff00;
+   }
+   #list-key {
+      background-color: #0000ff;
+   }
+
+</style>
+
+{% endblock %}

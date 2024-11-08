@@ -1,0 +1,20 @@
+{% extends "base.html.jinja" %}
+
+{% block content %}
+   {{ super() }}
+   <main>
+      {% block content_ %}{% endblock %}
+   </main>
+{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+   main {
+      max-width: 800px;
+      margin-top: 10vh;
+   }
+</style>
+{% block head_ %}{% endblock %}
+
+{% endblock %}

@@ -1,22 +1,24 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "content.html.jinja" %}
+{% block content_ %}
+{{ super() }}
+
     <h1>Website to RSS Converter</h1>
    
     <div id="url-input-div">
         <form action="/edit" method="get">
             <!-- I know you need labels for forms for accessibility purposes, but it will be impossible to make the feed editor accessible, so small things like this do not matter -->
-            <input type="text" id="url-input" name="url-input" placeholder="website url">
+            <input type="url" id="url-input" name="url-input" placeholder="website url">
             <button type="submit">Convert</button>
         </form>
         <p id="tip">TIP: <span>rssc.baetylboy.biz/&lt;URL&gt;</span> works too! </p>
     </div>
 
-    <p>There are a lot of websites that post regular content, but do not have RSS feeds. This application scrapes article information from the menu url you give it, and uses it to build an rss feed.</p>
+    <p>There are a lot of websites that post regular content, but do not have RSS feeds. This application scrapes article information from the menu url you give it, and uses it to build an RSS feed.</p>
 
     <p>Submitting a url, or prepending "rssc.baetylboy.biz/" to the url in the address bar will bring you to a page where you can select which elements of the page constitute the RSS feed.</p>
 {% endblock %}
 
-{% block head %}
+{% block head_ %}
 {{ super() }}
 
 <style>

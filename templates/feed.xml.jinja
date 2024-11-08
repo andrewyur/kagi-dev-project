@@ -4,18 +4,22 @@
     <title>{{ channel.title }}</title>
     <link>{{ channel.link }}</link>
     <description>{{ channel.description }}</description>
-    <language>{{ channel.language }}</language>
     <lastBuildDate>{{ channel.lastBuildDate }}</lastBuildDate>
+    <generator>Andrew's RSS Converter</generator>
+    {%- if channel.pubDate %}
     <pubDate>{{ channel.pubDate }}</pubDate>
+    {%- endif %}
     <atom:link href="{{ channel.link }}" rel="self" type="application/rss+xml" />
-    {% for item in items %}
+    {%- for item in items %}
     <item>
       <title>{{ item.title }}</title>
       <link>{{ item.link }}</link>
       <guid>{{ item.link }}</guid>
       <description>{{ item.description }}</description>
+      {%- if item.pubDate %}
       <pubDate>{{ item.pubDate }}</pubDate>
+      {%- endif %}
     </item>
-    {% endfor %}
+    {%- endfor %}
   </channel>
 </rss>
