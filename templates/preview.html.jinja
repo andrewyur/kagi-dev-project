@@ -1,0 +1,130 @@
+{% extends "content.html.jinja" %}
+
+{% block content_ %}
+
+<div id="channel">
+   <h1>{{channel.title}}</h1>
+   <p>description: {{channel.description}}</p>
+</div>
+
+<h2>Items:</h2>
+<ul>
+{% for item in items %}
+   <li>
+      <h3>{{item.title}}</h3>
+      <p>link: <a href="{{item.link}}" target="_blank"> {{item.link}}</a></p>
+
+      {%- if item.pubDate %}
+      <p>published: {{ item.pubDate }}</p>
+      {%- endif %}
+      {%- if item.description %}
+      <p>{{ item.description }}</p>
+      {%- endif %}
+   </li>
+{% endfor %}
+</ul>
+
+<form action="/" method="POST">
+   <input type="text" id="homepage" name="homepage" value="{{preview_data.homepage}}"/>
+   <input type="text" name="channel-title" value="{{preview_data.channel.title}}"/>
+   <input type="text" name="channel-description" value="{{preview_data.channel.description}}"/>
+   <input type="text" name="item-title-query" value="{{preview_data.item.title.query}}"/>
+   <input type="text" name="item-link-query" value="{{preview_data.item.link.query}}"/>
+   {% if preview_data.pubDate %}
+   <input type="text" name="item-pubDate-query" value="{{preview_data.item.pubDate.query}}"/>
+   {% endif %}
+   {% if preview_data.description %}
+   <input type="text" name="item-description-query" value="{{preview_data.item.description.query}}"/>
+   {% endif %}
+
+
+   <!-- there are only 2 hard things in computer science: naming things, cache invalidation, and off by one errors -->
+   <div id="floating">
+      <div id="background">
+         <h2>Preview: How does this look?</h2>
+         <div id="decision">
+            <button id="no">Doesn't Look Right</button>
+            <button id="yes">Looks Good!</button>
+         </div>
+      </div>
+   </div>
+</form>
+
+<script>
+
+const form = document.querySelector("form")
+
+document.getElementById("yes").addEventListener("click", () => {
+   form.action = "/rss/create"
+})
+
+document.getElementById("no").addEventListener("click", () => {
+   form.action = `/edit/?url-input=${encodeURIComponent(document.getElementById("homepage").value)}`
+})
+
+</script>
+
+{% endblock %}
+
+{% block head_ %}
+
+<style>
+li {
+   padding: 10px;
+}
+
+h1, h2, h3, p {
+   margin: 0;
+}
+
+#channel {
+   margin-bottom: 40px;
+}
+
+#floating {
+   position: fixed;
+   bottom: 20px;
+   left: 0;
+   right: 0;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 10px;
+}
+
+#background {
+   background-color: var(--background);
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 10px;
+   padding: 10px;
+   border: 3px solid var(--text);
+}
+
+#decision {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   justify-content: center;
+   gap: 10px;
+}
+
+a, a:visited {
+   color: wheat;
+}
+
+button {
+   width: 200px;
+   height: 50px;
+   font-size: large;
+}
+
+input {
+   visibility: hidden;
+   position: absolute;
+   z-index: -100;
+}
+</style>
+
+{% endblock %}

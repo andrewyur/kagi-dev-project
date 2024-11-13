@@ -9,6 +9,7 @@
         devShells."${system}".default = pkgs.mkShell {
             packages = with pkgs; [
                 python313
+                sqlite
             ];
             shellHook = ''
                 if [ ! -d ".venv" ]; then

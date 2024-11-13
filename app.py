@@ -1,4 +1,5 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect
+from urllib.parse import quote
 from api.routes import api_bp
 from auth.routes import auth_bp
 from edit.routes import edit_bp
@@ -20,8 +21,12 @@ def catch_url(url: str):
     # add back the "http" stripped off by the route selector
     url = f"http{url}"
 
+    # add append a / if it is not there already (for some reason this causes the proxy page to crash when fetching assets)
+    if url[-1] != '/':
+        url += '/'
+
     # redirect to edit page
-    return redirect(f"/edit?url-input={url}")
+    return redirect(f"/edit?url-input={quote(url, safe='')}")
     
 
 

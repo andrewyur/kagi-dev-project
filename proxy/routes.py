@@ -36,8 +36,8 @@ def reflect(proxy_url):
       for tag in ["img", "script", "link", "a", "form", "audio", "video", "source"]:
          for element in document.cssselect(tag):
             for attribute in ["href", "src", "srcset", "action"]:
-               if element.get(attribute) is not None :
-                  element.set(attribute, f"/proxy/{url_parts.scheme}://{url_parts.netloc}{element.get(attribute)}")
+               if element.get(attribute) is not None and not element.get(attribute).startswith("http"):
+                     element.set(attribute, f"/proxy/{url_parts.scheme}://{url_parts.netloc}{element.get(attribute)}")
 
       return html.tostring(document)
    

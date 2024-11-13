@@ -17,7 +17,7 @@ To run in production mode:
 
 ## Design Outline
 
-The majority of the function of this app will happen on the backend. I will be using python & flask for the backend of this project for 4 reasons:
+The majority of the function of this app happens on the backend. I am using python & flask for the backend of this project for 4 reasons:
 
 - It is easy to write, and easy to read (for simple code)
 - This is not an application where performance is critical
@@ -25,9 +25,11 @@ The majority of the function of this app will happen on the backend. I will be u
 - I already know python, and how to use Flask
 - It is fun to write
 
-The frontend will likely be built around a templating engine for displaying data. I will be using Jinja2, which is built into flask. However, a small amount of JS will likely be needed for session management, and for this i will probably be just sending plain js files.
+The frontend is around Jinja2, the templating engine built into flask. Any JS & CSS needed will be located directly in the template files as `<script>` and `<style>` elements.
 
-To persist data, I will likely be using a self hosted instance of PocketBase, which is a free, open-source NoSQL database with built in authentication. I will be running this locally inside the same docker image as my backend, which eliminates the hassle of cross-container communication.
+To persist data, I will likely be using SQLite, because it is very easy to use and set up, and is very portable.
+
+For authentication, I only need something simple and will likely be using Authelia.
 
 To deploy it, I will be creating a nix environment, and running it on a cloud vm (likely nixos on a google compute instance). I already have a domain name I can use under google cloud provider, so I will provision a subdomain for it to use.
 
@@ -42,7 +44,7 @@ Routing structure:
 /api/... -> clientside request handling
 ```
 
-The backend will use BeautifulSoup (a web scraper) to extract data from the provided page using css queries, and then store the queries in Pocketbase. Every time an rss endpoint recieves a request, the scraper will use the queries on the updated page, and then return the items.
+The backend uses lxml to extract data from the provided page using css queries. To create a feed, the user will direct the frontend to submit css queries to the backend, which are stored in the database. Every time an rss endpoint with a specific id recieves a request, the backend will find the css queries associated with the id in the database, use the queries on the website, and then return the items, formatted into an xml document with jinja.
 
 data schema:
 
@@ -57,8 +59,6 @@ data schema:
     "title": "venki.dev notes",
     "description": "items from venki.dev/notes"
   },
-  // common prefix to all rss item queries
-  "base_query": "html > body > div > main > div:nth-of-type(2) > main > div > ul > li > div",
   // css selector queries and html attributes to get a list of data for the given rss attribute
   "item": {   
     "title": {              // required
@@ -87,22 +87,25 @@ data schema:
   - [x] Setup blueprints for each routing section
 - [ ] add main functionality
   - [x] make a url input screen
-  - [ ] make rss feeds return data from pocketbase
-    - [x] make a single endpoint that will display a single rss feed, with dummy data in the defined schema
-    - [ ] get pocketbase working, and pull in data from pocketbase for each route
+  - [ ] make rss feeds return data from the database
+    - [x] route for generating a preview of data stored in browser session
+    - [ ] revive the test xml endpoint
+    - [ ] flatten the schema, and get rid of attribute values
+    - [ ] get the database working, and pull in data from the database for each route
   - [ ] make rss editor
     - [x] initial screen layout
-    - [x] make an html element selector from iframe
-    - [ ] make a screen for user to edit values directly
-      - [ ] input element have checks when filled, css is invisible
-      - [ ] no need for base query, even in schema, user should use the double selector for everything
-      - [ ] red and green should clear after blue has been selected
-    - [ ] help modals
-    - [ ] get rid of layout forcing that causes unstyled content to be shown
-    - [ ] submit button & add data into pocketbase
+    - [x] iframe functionality and initial form layout
+      - [x] use the html selector for static content
+      - [ ] FoUC
+      - [x] loading shroud/modal
+    - [x] html element selector
+    - [x] form validation
+    - [x] help modals & more accurate tooltips
+    - [x] direct to preview page on submission
+  - [ ] Endpoint for creating an rss feed
   - [ ] use LLM API to construct an initial RSS feed to load into the editor
-  - [ ] implement caching for each rss feed
-- [ ] Add authn & authz with Pocketbase
+  - [ ] implement caching for each rss feed to reduce the use of the LLM for initial construction
+- [ ] Add authn & authz with Authelia
   - [ ] add auth modals to base html layout and their corresponding js
     - [ ] login modal
     - [ ] reset password modal
@@ -112,9 +115,13 @@ data schema:
   - [ ] page to display all feeds created by a user
   - [ ] require user to be the creator of the feed to edit
 - [ ] Configure everything for prod
+  - [ ] production server
+  - [ ] js bundler/minifiers & other file compression
+  - [ ] nix flake stuff
+    - platform & architecture should be an input
 - [ ] deploy to cloud
 - [ ] test with RSS reader
-- [ ] extra feature: atom feed compatibility
+- [ ] extra feature: atom feed compatibility (is this already compatible with atom feeds?)
 
 ## Development Notes
 
@@ -149,3 +156,7 @@ Because iframe limits interactions to the same-origin policy (meaning I cannot a
 It is unfortunately going to be very impractical to completely replicate a webpage using my proxy page, because webpages these days come in so many pieces, and the links that refer the browser to them are often relative, and are scattered all throughout each others contents. To make a webpage rendered via proxy look exactly like the real thing, I would have to search through every asset file for relative links, and replace them on the server side, which is quite a hassle. The webpages look mostly similar, off except for a font or a broken image here or there, and that is good enough for my purposes.
 
 looking back, it probably would have been a good idea to use some kind of framework, at least for the rss editor, because the code is getting very cluttered and hard to read...
+
+Actually, once I refactored everything into classes, the code became a lot more readable and easier to work with. love that!
+
+I decided to get rid of the option for the user to select the html attribute they want to be incorporated into the feed, because most of the time it will be textContent, or href for the article link. This does make it impossible to use in some edge cases, but I feel like this is a fair trade because it allows for the user to do the entire process without any knowledge of HTML/CSS. This will open the application up to a much larger userbase, as there are a good chunk of people who know what an rss feed is, but are not technically inclined and have little to no knowledge of html & css.

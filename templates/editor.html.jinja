@@ -1,27 +1,21 @@
 {% extends "base.html.jinja" %}
 
 {% macro field(name, label, description, required=True, readonly=False) %}
-   <label for="{{ name }}" title="{{ description }}">{{ label }}
+   <label for="{{ name }}" title="{{ description }}">
+      {% if required %}<span class="required">*</span>{% endif %}
+      {{ label | capitalize }}
       <span class="tooltip">?</span>
    </label>
-   <input id="{{ name }}" name="{{ name }}" type="text" 
+   <input id="{{ name }}" name="{{ name }}" type="text" autocomplete="off"
    {% if required %} required {% endif %}
    {% if readonly %} readonly {% endif %}
+   {% if input_data and name in input_data %} value="{{ input_data[name] }}" {% endif %}
    />
 {% endmacro %}
 
-{% macro select_field(name, label, description, required=True) %}
-   <label for="{{ name }}" title="{{ description }}">{{ label }}
-      <span class="tooltip" >?</span>
-   </label>
-   <select id="{{ name }}" name="{{ name }}"
-   {% if required %} required {% endif %}
-   ></select>
-{% endmacro %}
-
 {% macro item_field(item_name, item_label, required=True) %}
-   {{ field("item-" ~ item_name ~ "-query", "CSS Query", "A CSS query that, when added to the end of the base CSS query, will return the HTML element that contains the " ~ item_label ~ " of each RSS item.", required=required) }}
-   {{ select_field("item-" ~ item_name ~ "-attribute", "HTML Attribute", "The attribute of the selected HTML item that contains the " ~ item_label ~ " of each RSS item.", required=required) }}
+   {{ field("item-" ~ item_name ~ "-query", item_label, "The HTML elements that contain the " ~ item_label ~ " of each RSS item. Click on the box and select two elements from the webpage, and the rest will be shown highlighted in blue.", required=required) }}
+   <input type="text" id="item-{{item_name}}-attribute" name="item-{{item_name}}-attribute" style="visibility:hidden; position:absolute; z-index:-100;"/>
 {% endmacro %}
 
 {% block content %}
@@ -35,90 +29,70 @@
          <p>First Element</p> <div id="first-key"></div>
          <p>Second Element</p> <div id="second-key"></div>
          <p>List Element</p> <div id="list-key"></div>
-         <button id="fill">Fill</button> <button id="reset">Reset</button>
+         <button id="reset">Reset</button>
       </div>
    </div>
    <div id="feed-constructor">
-      <form action="/edit/create_feed" method="post">
+      <form id="feed-constructor-form" action="/rss/preview" method="post">
          <fieldset id="channel-fieldset">
-            <legend>Channel Attributes</legend>
+            <legend>RSS Channel Attributes</legend>
             <div class="fieldset-item-container">
                {{ field("channel-title", "Title", "The title of the RSS channel") }}
                {{ field("channel-description", "Description", "The description of the RSS channel") }}
+               <input type="text" id="homepage" name="homepage" style="visibility:hidden; position:absolute; z-index:-100;"/>
             </div>
          </fieldset>
          <fieldset id="item-fieldset">
-            <legend>Item Attributes</legend>
+            <legend>RSS Item Attributes</legend>
             <div class="fieldset-item-container">
-               {{ field("base_query", "List Element Query", "A CSS query that returns the list of HTML elements you want represented as RSS items", readonly=True) }}
+               {{ item_field("title", "title") }}
+               {{ item_field("link", "URL") }}
+               {{ item_field("pubDate", "publication date", required=False) }}
+               {{ item_field("description", "description", required=False) }}
             </div>
-            <fieldset id="title-fieldset">
-               <legend>Title</legend>
-               <div class="fieldset-item-container">
-                  {{ item_field("title", "title") }}
-               </div>
-            </fieldset>
-            <fieldset id="link-fieldset">
-               <legend>Link</legend>
-               <div class="fieldset-item-container">
-                  {{ item_field("link", "URL") }}
-               </div>
-            </fieldset>
-            <fieldset id="pubDate-fieldset">
-               <legend>Publication Date</legend>
-               <div class="fieldset-item-container">
-                  {{ item_field("pubDate", "publication date", required=False) }}
-               </div>
-            </fieldset>
-            <fieldset id="description">
-               <legend>Description</legend>
-               <div class="fieldset-item-container">
-                  {{ item_field("description", "description", required=False) }}
-               </div>
-            </fieldset>
          </fieldset>
+         <p class="required">* indicates required</p>
          <button type="submit">Create</button>
       </form>
+      <button id="help" onclick="document.getElementById('instructions-modal').showModal()">Help!</button>
    </div>
 </div>
 
 <dialog id="error-modal">
    <p id="error-message"></p>
-   <a href="/">Choose another url</a>
+   <button id="error-ok">Ok</button>
+</dialog>
+
+<dialog id="no-url-modal">
+   <p>A url was not provided!</p>
 </dialog>
 
 <dialog id="instructions-modal">
-   <p>This is the editor screen.</p>
+   <h1>Editor Screen Instructions</h1>
 
-   <p>hover over a part of your selected webpage to see its element in the attribute pane.</p>
-   <p>Click on the element to select it, and then choose an attribute to load as the selected RSS component in the feed constructor.</p>
-   <p>You can edit static values like the title and description of the RSS feed by typing directly in the feed editor.</p>
-</dialog>
+   <p><b>For Static Information</b> (the title & description of the RSS feed):</p>
+   <p>Click on a box, then select a page element to copy its text, or type directly into the box.</p>
+   <p><b>For Dynamic Information</b> (e.g., title and URL of each article):</p>
+   <ol>
+      <li>Click on the relevant box to activate it for selection.</li>
+      <li>Then, select <b>two instances</b> of the elements you want to capture repeatedly 
+         (e.g., if you're choosing links, click on the links of two different articles).</li>
+      <li>If your selection is compatible, all similar elements will highlight in <b style="color: blue;">blue</b>. 
+         This means they're ready to be included in the RSS feed.</li>
+      <li>Once highlighted, proceed to the next attribute by repeating the above steps.</li>
+  </ol>
 
-<dialog id="list-instructions-modal">
+  <p>You can view these instructions at any time by pressing the Help! button in the bottom right corner of the screen.</p>
 
-</dialog>
-
-<dialog id="item-instructions-modal">
-
+   <button id="instructions-ok" disabled>Loading...</button>
 </dialog>
 
 <script>
-   // selection process flow: 
-
-   // user reads info & instructions popup
-   // user fills in channel attributes
-   // user selects the list element query
-      // user selects the first element
-      // user selects the second element
-      // user confirms the fill or resets
-   // user selects the other item queries and css attributes 
-
-
    class Highlighter {
-      static red = "#ff0000"
-      static blue = "#00ff00"
-      static green = "#0000ff"
+      static red = "#ff0000" // first element
+      static green = "#00ff00" // second element
+      static blue = "#0000ff" // list element
+      static gray = "#888888" // static element
 
       constructor(styleElement) {
          this.styleElement = styleElement
@@ -131,16 +105,12 @@
          })
 
          this.styleElement.innerText = cssList.join(" ")
-
-         console.log(cssList.join(" "))
       }
 
       highlightElement(query, color) {
          this.highlightedElements = this.highlightedElements.filter((obj) => obj.color != color)
          this.highlightedElements.push({query, color})
          this._updateHighlighted()
-
-         {# console.log(this.highlightedElements) #}
       }
 
       clearAllHighlights() {
@@ -149,123 +119,253 @@
       }
    }
 
-   class BaseQuerySelector {
-      inputElement = document.getElementById("base_query")
-      aggregatorElement = document.getElementById("element-aggregator")
-      fillButtonElement = document.getElementById("fill")
+   class ElementAggregator {
+      element = document.getElementById("element-aggregator")
+      resetElement = document.getElementById("reset")
+      reportingTo = null
 
+      constructor() {
+         this.resetElement.addEventListener("click", () => this.reportingTo?.handleReset())
+
+         // prevent this element from being selectable, so when the user clicks on it input elments on the form do not become unfocused
+         this.element.addEventListener("mousedown", (e) => e.preventDefault());
+         this.element.addEventListener("mouseup", (e) => e.preventDefault());
+      }
+
+      activate(DoubleClickSelector) {
+         this.reportingTo = DoubleClickSelector
+         this.element.style.visibility = "visible"
+      }
+
+      deactivate() {
+         this.reportingTo = null
+         this.element.style.visibility = "hidden"
+      }
+   }
+
+   class StaticContentSelector {
+      inputElement
+      highlighter
+
+      selecting = false
+
+      constructor(highlighter, itemName) {
+         this.highlighter = highlighter
+         this.inputElement = document.getElementById(`channel-${itemName}`)
+
+         this.inputElement.addEventListener("click", () => {
+            this.start()
+         }) 
+         this.inputElement.addEventListener("focus", () => {
+            this.start()
+         }) 
+
+         this.inputElement.addEventListener("blur", () => {
+            this.stop()
+         }) 
+      }
+
+      start() {
+         if(!this.selecting) {
+            this.selecting = true
+            this.highlighter.clearAllHighlights()
+            this.inputElement.focus()
+         }
+      }
+
+      stop() {
+         if(this.selecting) {
+            this.selecting = false
+            this.highlighter.clearAllHighlights()
+            this.inputElement.blur()
+         }
+      }
+
+      handleHover(domNode) {
+         if(this.selecting) {
+            this.highlighter.highlightElement(calculateCssSelector(domNode), Highlighter.gray)
+         }
+      }
+
+      handleClick(domNode) {
+         if(this.selecting) {
+            this.inputElement.value = domNode.textContent
+         }
+      }
+   }
+
+   class DoubleClickSelector {
+      inputElement
+      elementAggregator
+      attribute
+      itemName
+
+      // these should be DOM nodes, not css selectors
       firstElement = null
       secondElement = null
-      listElement = null
+
+      // this is a css selector
+      listQuery = null
 
       selecting = false
 
       // selecting the 1st or 2nd element? or none?
       _currentlySelecting = 1
 
-      constructor(highlighter) {
+      constructor(highlighter, itemName, elementAggregator, attribute="textContent") {
          this.highlighter = highlighter
+         this.attribute = attribute
+         this.inputElement = document.getElementById(`item-${itemName}-query`)
+
+         // value may have already been filled by the LLM or from the preview screen
+         if(this.inputElement.value != ""){
+            this.highlighter.highlightElement(this.listQuery, Highlighter.blue)
+            this.listQuery = this.inputElement.value
+            this.inputElement.className = "checked"
+            this._currentlySelecting = null
+         }
+
+         document.getElementById(`item-${itemName}-attribute`).value = attribute
+         this.elementAggregator = elementAggregator
+         this.itemName = itemName
 
          this.inputElement.addEventListener("click", () => {
             this.start()
          })
-
-         // add listeners to the aggregator buttons
-         this.fillButtonElement.disabled = true
-         this.fillButtonElement.addEventListener("click", () => {
-            this.inputElement.value = this.listElement
-            this.stop()
+         this.inputElement.addEventListener("focus", () => {
+            this.start()
          })
-         document.getElementById("reset").addEventListener("click", () => {
-            this.highlighter.clearAllHighlights()
-            this.firstElement = null
-            this.secondElement = null
-            this.listElement = null
-            this._currentlySelecting = 1
-            this.inputElement.value = ""
+
+         this.inputElement.addEventListener("blur", () => {
+            this.pause()
          })
       }
 
-      handleHover(cssQuery) {
+      start() {
+         if(this.selecting == false) {
+            this.selecting = true
+            this.highlighter.clearAllHighlights()
+            if(this.listQuery) {
+               this.highlighter.highlightElement(this.listQuery, Highlighter.blue)
+            }else if(this.firstElement) {
+               this.highlighter.highlightElement(calculateCssSelector(this.firstElement), Highlighter.red)
+            }
+            this.inputElement.focus()
+            this.elementAggregator.activate(this)
+         }
+      }
+
+      pause() {
+         if(this.selecting) {
+            this.selecting = false
+            this.highlighter.clearAllHighlights()
+            this.inputElement.blur()
+            this.elementAggregator.deactivate()
+         }
+      }
+
+      handleReset() {
+         this.highlighter.clearAllHighlights()
+         this.firstElement = null
+         this.secondElement = null
+         this.listQuery = null
+         this._currentlySelecting = 1
+         this.inputElement.value = ""
+         this.inputElement.className = ""
+         this.inputElement.focus()
+      }
+
+      handleHover(domNode) {
+         const cssQuery = calculateCssSelector(domNode)
+
          if (this.selecting && this._currentlySelecting != null) {
             let hoverColor
 
             if(this._currentlySelecting == 1) {
                hoverColor = Highlighter.red
             }else if(this._currentlySelecting == 2){
-               hoverColor = Highlighter.blue
+               hoverColor = Highlighter.green
             }
 
             this.highlighter.highlightElement(cssQuery, hoverColor)
          }
       }
 
-      handleClick(cssQuery) {
-         console.log(cssQuery)
+      handleClick(domNode) {
+         const cssQuery = calculateCssSelector(domNode)
 
          if(this.selecting) {
             if(this._currentlySelecting == 1){
-               this.firstElement = cssQuery
+               this.firstElement = domNode
                this._currentlySelecting = 2
                this.highlighter.highlightElement(cssQuery, Highlighter.red)
             } else if (this._currentlySelecting == 2) {
-               this.secondElement = cssQuery
+               this.secondElement = domNode
                this._currentlySelecting = null
-               this.highlighter.highlightElement(cssQuery, Highlighter.blue)
+               this.highlighter.clearAllHighlights()
 
-               this._calculateListSelector()
-               this.highlighter.highlightElement(this.listElement, Highlighter.green)
-               this.fillButtonElement.disabled = false
+               if (this._calculateListQuery()) {
+                  this.highlighter.highlightElement(this.listQuery, Highlighter.blue)
+                  this.inputElement.value = this.listQuery
+                  this.inputElement.className = "checked"
+               }
             }
 
             this.inputElement.focus()
          }
       }
 
-      start() {
-         this.aggregatorElement.style.visibility = "visible"
-         this.selecting = true
-         this.inputElement.focus()
-         this.highlighter.clearAllHighlights()
-         this.firstElement = null
-         this.secondElement = null
-         this.listElement = null
-         this._currentlySelecting = 1
-         this.inputElement.value = ""
-      }
+      _calculateListQuery() {
+         if(this.firstElement == this.secondElement) {
+            displayError("the two items you selected are the same!")
+            this.handleReset()
+            return false
+         }
 
-      stop() {
-         this.aggregatorElement.style.visibility = "hidden"
-         this.highlighter.clearAllHighlights()
-         this.firstElement = null
-         this.secondElement = null
-         this.listElement = null
-         this.selecting = false
-         this.inputElement.blur()
-      }
+         let element1 = this.firstElement
+         let element2 = this.secondElement
+         let path = []
 
-      _calculateListSelector() {
+         if(this.attribute != "textContent") {
+            while (!element1.hasAttribute(this.attribute) && !element2.hasAttribute(this.attribute) ) {
+               element1 = element1.parentNode
+               element2 = element2.parentNode
 
-         let sharedAncestorEnd = Math.min(this.firstElement.length, this.secondElement.length)
-         let lastSpace = 0
-
-         for(let i = 0; i < Math.min(this.firstElement.length, this.secondElement.length); i++) {
-            if(this.firstElement.charAt(i) != this.secondElement.charAt(i)) {
-               sharedAncestorEnd = lastSpace
-               break;
-            }
-
-            if(this.firstElement.charAt(i) == " "){
-               lastSpace = i
+               if(element1 == element2) {
+                  displayError(`the two items you selected don't have a ${this.attribute} attribute!`)
+                  this.handleReset()
+                  return false
+               }
             }
          }
 
-         const sharedSubstring = this.firstElement.substring(0, sharedAncestorEnd)
-         const listElementTagEndIndex = this.firstElement.substring(sharedAncestorEnd).indexOf(":") + sharedAncestorEnd
+         while(true) {
+            const parent1 = element1.parentNode
+            const parent2 = element2.parentNode
 
-         const listElementTag = this.firstElement.substring(sharedAncestorEnd, listElementTagEndIndex) 
+            if(parent1 == parent2) {
+               path.unshift(element1.tagName)
+               break;
+            }
 
-         this.listElement = sharedSubstring + listElementTag
+            if(element1.tagName != element2.tagName){
+               displayError("the two items you selected are not the same type!")
+               this.handleReset()
+               return false
+            }
+
+            // need to use Array.prototype.indexOf here bc parent.children is a NodeList, not an Array
+            elementIndex = [].indexOf.call(parent1.children, element1)
+
+            path.unshift(`${element1.tagName}:nth-child(${elementIndex+1})`)
+
+            element1 = parent1
+            element2 = parent2
+         }
+
+         this.listQuery = calculateCssSelector(element1.parentNode) + ` > ${path.join(' > ')}`.toLowerCase()
+
+         return true
       }
    }
 
@@ -274,33 +374,45 @@
       documentHandle = null
       hoveredElement = null
       highlighter = null
-      baseQuerySelector = null
       selecting = false
       mouseMoved = false
+
+      dynamicSelectorList = []
 
       constructor() {
          // parse the url from url search params and load it into the iframe 
          const searchParams = new URLSearchParams(window.location.search)
          
          if(!searchParams.has("url-input")) {
-            displayError("A url was not supplied!")
-         }else{
-            const inputUrl = searchParams.get("url-input")
-            this.handle.src = `/proxy/${inputUrl}`
+            document.getElementById("no-url-modal").showModal()
+            return
          }
+
+         const inputUrl = searchParams.get("url-input")
+         this.handle.src = `/proxy/${inputUrl}`
+
+         document.getElementById("homepage").value = inputUrl
 
          this.handle.addEventListener("load", () => this._initialize())
 
          this.handle.addEventListener("mouseenter", () => this.selecting = true)
          this.handle.addEventListener("mouseleave", () => this.selecting = false)
 
+         this.elementAggregator = new ElementAggregator()
+
          setInterval(this._handleHover, 25)
+
+         document.getElementById("instructions-modal").showModal()
       }
 
       _initialize = () => {
-         // attach event listeners inside the document context
+         // attach event listeners inside the iframe's document context
 
          this.documentHandle = this.handle.contentDocument || this.handle.contentWindow.document;
+
+         // prevent this element from being selectable, so when the user clicks on it input elments on the form do not become unfocused
+         this.documentHandle.addEventListener("mousedown", (e) => e.preventDefault());
+         this.documentHandle.addEventListener("mouseup", (e) => e.preventDefault());
 
          this.documentHandle.body.addEventListener("mousemove", (moveEvent) => {
             this.mouseMoved = true
@@ -312,11 +424,8 @@
             clickEvent.stopPropagation()
             clickEvent.preventDefault()
 
-            let cssSelector = calculateCssSelector(clickEvent.target) 
-
-            if(this.baseQuerySelector.selecting) {
-               this.baseQuerySelector.handleClick(cssSelector)
-            }
+            this.dynamicSelectorList.forEach((s) => s.handleClick(clickEvent.target))
+            this.staticSelectorList.forEach((s) => s.handleClick(clickEvent.target))
 
          }, true)
 
@@ -325,7 +434,26 @@
          this.documentHandle.head.appendChild(injectedStyle)
          this.highlighter = new Highlighter(injectedStyle)
 
-         this.baseQuerySelector = new BaseQuerySelector(this.highlighter)
+         this.staticSelectorList = [
+            new StaticContentSelector(this.highlighter, "title"),
+            new StaticContentSelector(this.highlighter, "description"),
+         ]
+
+         this.dynamicSelectorList = [
+            new DoubleClickSelector(this.highlighter, "title", this.elementAggregator),
+            new DoubleClickSelector(this.highlighter, "link", this.elementAggregator, "href"),
+            new DoubleClickSelector(this.highlighter, "pubDate", this.elementAggregator),
+            new DoubleClickSelector(this.highlighter, "description", this.elementAggregator)
+         ]
+
+
+         const okButton = document.getElementById("instructions-ok")
+         okButton.textContent = "OK"
+         okButton.disabled = false
+         okButton.addEventListener("click", () => {
+            document.getElementById("instructions-modal").close()
+            document.getElementById("channel-title").focus()
+         })
       }
 
       _handleHover = () => {
@@ -334,35 +462,33 @@
             return
          }
 
-         let cssSelector = calculateCssSelector(this.hoveredElement)
-
-         if(this.baseQuerySelector.selecting) {
-            this.baseQuerySelector.handleHover(cssSelector)
-         }
+         this.dynamicSelectorList.forEach((s) => s.handleHover(this.hoveredElement))
+         this.staticSelectorList.forEach((s) => s.handleHover(this.hoveredElement))
 
          this.mouseMoved = false
       }
 
    }
 
+   let errorModal
    function displayError(message) {
       const errorMessage = document.getElementById("error-message")
       errorMessage.innerText = message
 
-      const errorModal = document.getElementById("error-modal")
+      errorModal = document.getElementById("error-modal")
       errorModal.showModal()
+      
    }
+      
+   document.getElementById("error-ok").addEventListener("click", () => {
+      errorModal.close()
+   })
+
 
    // based off of https://stackoverflow.com/questions/8588301/how-to-generate-unique-css-selector-for-dom-element
    function calculateCssSelector(element) {
       let path = [], parent
       while (parent = element.parentNode) {
-
-         // may have to remove this part if i encounter ephemeral ids that are generated by frontend frameworks
-         if(element.id != "") {
-            path.unshift(`#${element.id}`)
-            break
-         }
 
          // need to use Array.prototype.indexOf here bc parent.children is a NodeList, not an Array
          elementIndex = [].indexOf.call(parent.children, element)
@@ -374,7 +500,30 @@
       return `${path.join(' > ')}`.toLowerCase()
    }
 
-   iframe = new Iframe()
+   const iframe = new Iframe()
+
+   document.getElementById("feed-constructor-form").addEventListener("submit", (e) => {
+
+      let queryResultLengths = iframe.dynamicSelectorList.map((s) => {
+         return {
+            length: s.inputElement.value != "" ? iframe.documentHandle.querySelectorAll(s.inputElement.value).length : -1,
+            attributeName: s.itemName 
+            }
+         }
+      )
+
+      queryResultLengths = queryResultLengths.filter((v) => v.length > 0)
+
+      if(queryResultLengths.some((v) => v.length != queryResultLengths[0].length)) {
+         e.preventDefault()
+         let displayString = queryResultLengths.map((s) => `${s.attributeName}: ${s.length}`).join("\n")
+         displayError(`The number of elements provided is not the same for each query! \n ${displayString}`)
+         console.log(queryResultLengths)
+      }
+
+      // should probably do some more validation, like checking to see if the attribute selected is present on every query item, but this should be fine for now
+   })
+
 </script>
 
 {% endblock %}
@@ -424,6 +573,12 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
+      width: 100%;
+   }
+
+   .fieldset-item-container p {
+      width: 100%;
+      text-align: left;
    }
 
    label {
@@ -478,6 +633,33 @@
       background-color: #0000ff;
    }
 
+   #item-title-query, #item-link-query, #item-pubDate-query, #item-description-query {
+      color: transparent
+   }
+
+   .checked {
+      background-color: var(--background);
+   }
+
+   input, select {
+      width: 100%;
+   }
+
+   .required {
+      color: #ff4444;
+      padding: 0;
+      margin: 0;
+   }
+
+   #help {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+   }
+
+   dialog {
+      max-width: 40vw;
+   }
 </style>
 
 {% endblock %}

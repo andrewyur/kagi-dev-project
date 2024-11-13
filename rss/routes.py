@@ -8,66 +8,74 @@ from dateutil import parser
 rss_bp = Blueprint('rss', __name__)
 
 
-sample_data = {
-   "rss_id": "test_feed",    
-   "homepage": "https://venki.dev/notes",  
-   "channel": {      
-      "title": "venki.dev notes",
-      "description": "items from venki.dev/notes"
-   },
-   "base_query": "html > body > div > main > div:nth-of-type(2) > main > div > ul > li > div",
-   "item": {   
-      "title": {              # required
-         "query": " > a > p",
-         "attribute": "textContent"
+
+@rss_bp.route("/preview", methods=["POST"])
+def preview_feed():
+
+   preview_data = {   
+      "homepage": request.form.get("homepage"),  
+      "channel": {      
+         "title": request.form.get("channel-title"),
+         "description":  request.form.get("channel-description")
       },
-      "link": {               # required
-         "query": " > a",
-         "attribute": "href"
-      },
-      "pubDate": {            # optional
-         "query": " > p",
-         "attribute": "textContent"
-      },
-      # "descrption": {            # optional
-      #    "query": None,
-      #    "attribute": None
-      # }
+      "item": {   
+         "title": {
+            "query": request.form.get("item-title-query"),
+            "attribute": request.form.get("item-title-attribute")
+         },
+         "link": {
+            "query": request.form.get("item-link-query"),
+            "attribute": request.form.get("item-link-attribute")
+         }
+      }
    }
-}
 
-@rss_bp.route("/test_feed")
-def test_feed():
+   if request.form.get("item-pubDate-query") is not None and  len(request.form.get("item-pubDate-query")) != 0:
+      preview_data["item"]["pubDate"] = {}
+      preview_data["item"]["pubDate"]["query"] = request.form.get("item-pubDate-query")
+      preview_data["item"]["pubDate"]["attribute"] = request.form.get("item-pubDate-attribute")
+   if request.form.get("item-description-query") is not None and len(request.form.get("item-description-query")) != 0:
+      preview_data["item"]["description"] = {}
+      preview_data["item"]["description"]["query"] = request.form.get("item-description-query")
+      preview_data["item"]["description"]["attribute"] = request.form.get("item-description-attribute")
 
-   # might be better to forward the user-agent header from the route request
-   response = requests.get(sample_data["homepage"], headers={'user-agent': 'andrew\'s rss converter'})
+   rss_object = create_rss_object(preview_data)
 
-   if not response.ok:
+   if isinstance(rss_object, str):
       return render_template(
          "error.html.jinja", 
-         message="There was an error fetching from the supplied webpage!", 
-         subtitle=str(e)
+         message=rss_object 
       )
 
+   return render_template("preview.html.jinja", **rss_object, preview_data=preview_data)
+
+
+
+def create_rss_object(rss_data):
+   # might be better to forward the user-agent header from the route request
+   response = requests.get(rss_data["homepage"], headers={'user-agent': 'andrew\'s rss converter'})
+
+   if not response.ok:
+      return "There was an error fetching from the supplied webpage!"
 
    document = html.document_fromstring(response.text)
 
    html_items = {
       rss_attr: [
-         html_item for html_item in document.cssselect(sample_data["base_query"] + sample_data["item"][rss_attr]["query"] )
-      ]  for rss_attr in sample_data["item"].keys() 
+         html_item for html_item in document.cssselect(rss_data["item"][rss_attr]["query"])
+      ]  for rss_attr in rss_data["item"].keys() 
    }
 
    get_html_attr = lambda html_item, attr: html_item.text_content() if attr == "textContent" else html_item.get(attr)
 
-   parse_rss_attr = lambda attr, i: get_html_attr(html_items[attr][i], sample_data["item"][attr]["attribute"])
+   parse_rss_attr = lambda attr, i: get_html_attr(html_items[attr][i], rss_data["item"][attr]["attribute"])
 
    items_amt = len(html_items["title"])
 
    # crazy list/dict comprehension, i will make this readable later
    rss_items = [
       {
-         attr_title: parse_rss_attr(attr_title, i) for attr_title in sample_data["item"].keys() 
+         attr_title: parse_rss_attr(attr_title, i) for attr_title in rss_data["item"].keys() 
       } for i in range(items_amt)
    ]
 
@@ -81,11 +89,7 @@ def test_feed():
             parsed_date = parser.parse(item["pubDate"])
          except Exception as e:
             print(e)
-            return render_template(
-               "error.html", 
-               message="There was an error parsing the date from the supplied element!", 
-               subtitle=e
-            )
+            return "There was an error parsing the date from the supplied element!"
 
          item["pubDate"] = formatdate(mktime(parsed_date.timetuple()), localtime=False, usegmt=True)
 
@@ -95,12 +99,12 @@ def test_feed():
             earliest_date = parsed_date
 
       if not item["link"].startswith("http"):
-         item["link"] = sample_data["homepage"] + item["link"]
+         item["link"] = rss_data["homepage"] + item["link"]
 
    format_date = lambda x: formatdate(mktime(x.timetuple()), localtime=False, usegmt=True)
 
    rss_channel = {
-      **sample_data["channel"],
+      **rss_data["channel"],
       "link": request.base_url
    }
 
@@ -108,15 +112,7 @@ def test_feed():
       rss_channel["lastBuildDate"] = format_date(latest_date)
       rss_channel["pubDate"] = format_date(earliest_date)
 
-   resp = make_response(
-      render_template(
-         "feed.xml.jinja", 
-         channel=rss_channel,
-         items=rss_items
-      )
-   )
-   resp.headers["content-type"] = "application/rss+xml"
-   
-   return resp
-
-
+   return {
+      "channel": rss_channel,
+      "items": rss_items
+   }
