@@ -12,13 +12,17 @@
 {% for item in items %}
    <li>
       <h3>{{item.title}}</h3>
-      <p>link: <a href="{{item.link}}" target="_blank"> {{item.link}}</a></p>
+      <p><span>link:</span> <a href="{{item.link}}" target="_blank"> {{item.link}}</a></p>
 
       {%- if item.pubDate %}
-      <p>published: {{ item.pubDate }}</p>
+      <p><span>published:</span> {{ item.pubDate }}</p>
+      {% else %}
+      <p><span>published: missing</span></p>
       {%- endif %}
       {%- if item.description %}
-      <p>{{ item.description }}</p>
+      <p><span>description:</span> {{ item.description }}</p>
+      {%- else %}
+      <p><span>description: missing</span></p>
       {%- endif %}
    </li>
 {% endfor %}
@@ -41,9 +45,9 @@
    <!-- there are only 2 hard things in computer science: naming things, cache invalidation, and off by one errors -->
    <div id="floating">
       <div id="background">
-         <h2>Preview: How does this look?</h2>
+         <h2>Editor Preview: how does this look?</h2>
          <div id="decision">
-            <button id="no">Doesn't Look Right</button>
+            <button id="no">I want to change something</button>
             <button id="yes">Looks Good!</button>
          </div>
       </div>
@@ -115,7 +119,7 @@ a, a:visited {
 }
 
 button {
-   width: 200px;
+   width: 300px;
    height: 50px;
    font-size: large;
 }
@@ -124,6 +128,10 @@ input {
    visibility: hidden;
    position: absolute;
    z-index: -100;
+}
+
+span {
+   opacity: 0.5;
 }
 </style>
 

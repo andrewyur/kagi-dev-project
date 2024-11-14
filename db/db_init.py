@@ -1,21 +1,23 @@
 import sqlite3
 import os
 
+
 def init_db():
-   db_path = "rss.db"
+    db_path = "rss.db"
 
-   if os.path.exists("rss.db"):
-      choice = input(f"delete database found at {db_path}? (y/n)")
+    if os.path.exists("rss.db"):
+        choice = input(f"delete database found at {db_path}? (y/n)")
 
-      if choice == 'y':
-         os.remove(db_path)
-      else:
-         exit()
+        if choice == "y":
+            os.remove(db_path)
+        else:
+            exit()
 
-   conn = sqlite3.connect(db_path)
-   cursor = conn.cursor()
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-   cursor.execute('''
+    cursor.execute(
+        """
       CREATE TABLE IF NOT EXISTS feeds (
          feed_id CHAR(21) PRIMARY KEY NOT NULL,
          homepage VARCHAR(50) NOT NULL,
@@ -26,11 +28,13 @@ def init_db():
          item_pubDate TEXT,
          item_description TEXT
       )
-   ''')
+   """
+    )
 
-   conn.commit()
-   conn.close()
+    conn.commit()
+    conn.close()
+
 
 if __name__ == "__main__":
-   init_db()
-   print("Database initialized successfully.")
+    init_db()
+    print("Database initialized successfully.")

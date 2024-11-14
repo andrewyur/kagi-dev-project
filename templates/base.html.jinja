@@ -39,10 +39,43 @@
                 min-height: 100vh;
                 overflow-x: hidden;
             }
+
+            .flashes {
+                position: fixed;
+                top: 0;
+                background-color: rgb(142, 43, 43);
+                padding: 0;
+                list-style: none;
+                border-radius: 5px;
+                z-index: 100000;
+                animation: fadeOut 10s forwards;
+            }
+
+            .flashes li {
+                padding: 10px;
+            }
+
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                }
+            }
         </style>
         {% endblock %}
     </head>
     <body>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </body>
 </html>

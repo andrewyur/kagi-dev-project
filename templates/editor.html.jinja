@@ -211,7 +211,7 @@
       // selecting the 1st or 2nd element? or none?
       _currentlySelecting = 1
 
-      constructor(highlighter, itemName, elementAggregator, attribute="textContent") {
+      constructor(highlighter, itemName, elementAggregator, initialValue, attribute="textContent") {
          this.highlighter = highlighter
          this.attribute = attribute
          this.inputElement = document.getElementById(`item_${itemName}`)
@@ -403,7 +403,7 @@
          document.getElementById("instructions-modal").showModal()
       }
 
-      _initialize = () => {
+      _initialize = async () => {
          // attach event listeners inside the iframe's document context
 
          this.documentHandle = this.handle.contentDocument || this.handle.contentWindow.document;
@@ -444,7 +444,6 @@
             new DoubleClickSelector(this.highlighter, "description", this.elementAggregator)
          ]
 
-
          const okButton = document.getElementById("instructions-ok")
          okButton.textContent = "OK"
          okButton.disabled = false
@@ -452,6 +451,7 @@
             document.getElementById("instructions-modal").close()
             document.getElementById("channel_title").focus()
          })
+
       }
 
       _handleHover = () => {

@@ -9,30 +9,32 @@ import os
 
 app = Flask(__name__)
 
+# need this for message flashing
+app.secret_key = os.environ["SECRET_KEY"]
 
-@app.route('/')
+
+@app.route("/")
 def input_url():
     return render_template("input.html.jinja")
 
+
 # catch an url supplied to the app through the address bar
-@app.route('/http<path:url>')
+@app.route("/http<path:url>")
 def catch_url(url: str):
 
     # add back the "http" stripped off by the route selector
     url = f"http{url}"
 
-    # add append a / if it is not there already (for some reason this causes the proxy page to crash when fetching assets)
-    if url[-1] != '/':
-        url += '/'
+    # redirect to generate page
+    return redirect(f"/edit/gen?url-input={quote(url, safe='')}")
 
-    # redirect to edit page
-    return redirect(f"/edit?url-input={quote(url, safe='')}")
-    
+
 @app.teardown_appcontext
-def close_db(error):
-    db = g.pop('db', None)
+def close_db(error):  # type: ignore
+    db = g.pop("db", None)
     if db is not None:
         db.close()
+
 
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(edit_bp, url_prefix="/edit")
@@ -40,7 +42,7 @@ app.register_blueprint(rss_bp, url_prefix="/rss")
 app.register_blueprint(proxy_bp, url_prefix="/proxy")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if not os.path.exists("rss.db"):
         print("initialize the database first!")
     else:

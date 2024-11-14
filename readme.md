@@ -4,10 +4,12 @@ By: Andrew Yurovchak
 
 ## How to run
 
+export your google genai api key as the `API_KEY` env var
+
 To run in development mode:
 
 - activate the shell with `nix develop`
-  - or if you dont have nix, install a recent version of python and pocketbase
+  - or if you dont have nix, install a recent version of python and sqlite
   - then run `python -m venv .venv`, `source .venv/bin/activate`, and `pip install -r requirements.txt`
 - run `python3 db/db-init.py` to initialize the database
 - run `python3 app.py` to start the development server
@@ -40,9 +42,10 @@ Routing structure:
 / -> html page where user can input a link to edit
 /http... -> redirects to /edit, as if user had just input the link
 /rss/... -> rss feeds
-/edit/... -> html page for user editing rss feeds
+/edit/... -> html page for creating rss feeds
 /auth/... -> authn functions
-/api/... -> clientside request handling
+/user/... -> crud operations for created user feeds
+/proxy/... -> proxy page for iframe, so i can get around same-origin policy
 ```
 
 The backend uses lxml to extract data from the provided page using css queries. To create a feed, the user will direct the frontend to submit css queries to the backend, which are stored in the database. Every time an rss endpoint with a specific id recieves a request, the backend will find the css queries associated with the id in the database, use the queries on the website, and then return the items, formatted into an xml document with jinja.
@@ -65,7 +68,7 @@ data schema:
   - [x] Setup blueprints for each routing section
 - [ ] add main functionality
   - [x] make a url input screen
-  - [ ] make rss feeds return data from the database
+  - [x] make rss feeds return data from the database
     - [x] route for generating a preview of data stored in browser session
     - [x] get the database working, and pull in data from the database for each route
   - [x] make rss editor
@@ -79,8 +82,17 @@ data schema:
     - [x] help modals & more accurate tooltips
     - [x] direct to preview page on submission
   - [x] Endpoint for creating an rss feed
-  - [ ] use LLM API to construct an initial RSS feed to load into the editor
+  - [x] use LLM API to construct an initial RSS feed to load into the editor
+    - [x] make the input go straight to the preview page, then the user can edit the queries with the editor if they dont like it
+    - [x] migrate RssData and RssFeed classes to pydantic
+    - [x] structured output for openai
+    - [x] add channel title and channel description queries
   - [ ] implement caching for each rss feed to reduce the use of the LLM for initial construction
+- [ ] go over code, and make things readable
+  - [ ] move the classes into their own js files in static/
+  - [ ] standardize url-input and input-url
+  - [ ] make further use of message flashing
+  - [ ] better exception handling
 - [ ] Add authn & authz with Authelia
   - [ ] add auth modals to base html layout and their corresponding js
     - [ ] login modal
@@ -138,3 +150,5 @@ Actually, once I refactored everything into classes, the code became a lot more 
 I decided to get rid of the option for the user to select the html attribute they want to be incorporated into the feed, because most of the time it will be textContent, or href for the article link. This does make it impossible to use in some edge cases, but I feel like this is a fair trade because it allows for the user to do the entire process without any knowledge of HTML/CSS. This will open the application up to a much larger userbase, as there are a good chunk of people who know what an rss feed is, but are not technically inclined and have little to no knowledge of html & css.
 
 I opted to create a db initialization script instead of directly inclduing the db file inside the version control system, because I don't need a substantial amount of seed data, and I want to be able to use the system locally without messing up the repository.
+
+For the llm, I originally decided to use google gemini's free api, but it was so slow (>10s per prompt) and lacked the ability to send concurrent requests so i decided to switch to openai.
