@@ -9,6 +9,8 @@ itsdangerous==2.2.0
 Jinja2==3.1.4
 lxml==5.3.0
 MarkupSafe==3.0.2
+nanoid==2.0.0
+nh3==0.2.18
 python-dateutil==2.9.0.post0
 requests==2.32.3
 six==1.16.0

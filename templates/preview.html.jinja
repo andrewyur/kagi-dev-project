@@ -25,16 +25,16 @@
 </ul>
 
 <form action="/" method="POST">
-   <input type="text" id="homepage" name="homepage" value="{{preview_data.homepage}}"/>
-   <input type="text" name="channel-title" value="{{preview_data.channel.title}}"/>
-   <input type="text" name="channel-description" value="{{preview_data.channel.description}}"/>
-   <input type="text" name="item-title-query" value="{{preview_data.item.title.query}}"/>
-   <input type="text" name="item-link-query" value="{{preview_data.item.link.query}}"/>
-   {% if preview_data.pubDate %}
-   <input type="text" name="item-pubDate-query" value="{{preview_data.item.pubDate.query}}"/>
+   <input type="text" id="homepage" name="homepage" value="{{preview_data['homepage']}}"/>
+   <input type="text" name="channel_title" value="{{preview_data['channel_title']}}"/>
+   <input type="text" name="channel_description" value="{{preview_data['channel_description']}}"/>
+   <input type="text" name="item_title" value="{{preview_data['item_title']}}"/>
+   <input type="text" name="item_link" value="{{preview_data['item_link']}}"/>
+   {% if preview_data['item_pubDate'] %}
+   <input type="text" name="item_pubDate" value="{{preview_data['item_pubDate']}}"/>
    {% endif %}
-   {% if preview_data.description %}
-   <input type="text" name="item-description-query" value="{{preview_data.item.description.query}}"/>
+   {% if preview_data['item_description'] %}
+   <input type="text" name="item_description" value="{{preview_data['item_description']}}"/>
    {% endif %}
 
 

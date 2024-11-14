@@ -9,6 +9,7 @@ To run in development mode:
 - activate the shell with `nix develop`
   - or if you dont have nix, install a recent version of python and pocketbase
   - then run `python -m venv .venv`, `source .venv/bin/activate`, and `pip install -r requirements.txt`
+- run `python3 db/db-init.py` to initialize the database
 - run `python3 app.py` to start the development server
 
 To run in production mode:
@@ -48,38 +49,15 @@ The backend uses lxml to extract data from the provided page using css queries. 
 
 data schema:
 
-```jsonc
-// example rss table entry
-{
-  // v4 uuid 
-  "rss_id": "f44f39a9-9845-44e2-a549-150c51eb73b4",    
-  "homepage": "https://venki.dev/notes",  
-  // these are static rss channel components that dont change
-  "channel": { 
-    "title": "venki.dev notes",
-    "description": "items from venki.dev/notes"
-  },
-  // css selector queries and html attributes to get a list of data for the given rss attribute
-  "item": {   
-    "title": {              // required
-        "query": " > a > p",
-        "attribute": "textContent"
-    },
-    "link": {               // required
-        "query": " > a",
-        "attribute": "href"
-    },
-    "pubDate": {            // optional
-        "query": " > p",
-        "attribute": "textContent"
-    },
-    // "descrption": {      // optional
-    //   "query": 
-    //   "attribute": 
-    // }
-  }
-}
-```
+| Column Name | Data Type | Description |
+|-|-|-|
+| `homepage` | VARCHAR(50) | URL of the of the website to be converted |
+| `channel-title` | VARCHAR(50) | Title of the RSS feed |
+| `channel-description` | TEXT | Description of the RSS feed |
+| `item-title` | TEXT | CSS Query for retrieving the title of RSS feed items |
+| `item-link` | TEXT | CSS Query for retrieving the link of RSS feed items |
+| `item-pubDate` | TEXT | CSS Query for retrieving the pubDate of RSS feed items |
+| `item-description` | TEXT | CSS Query for retrieving the description of RSS feed items |
 
 ## Roadmap
 
@@ -89,10 +67,8 @@ data schema:
   - [x] make a url input screen
   - [ ] make rss feeds return data from the database
     - [x] route for generating a preview of data stored in browser session
-    - [ ] revive the test xml endpoint
-    - [ ] flatten the schema, and get rid of attribute values
-    - [ ] get the database working, and pull in data from the database for each route
-  - [ ] make rss editor
+    - [x] get the database working, and pull in data from the database for each route
+  - [x] make rss editor
     - [x] initial screen layout
     - [x] iframe functionality and initial form layout
       - [x] use the html selector for static content
@@ -102,7 +78,7 @@ data schema:
     - [x] form validation
     - [x] help modals & more accurate tooltips
     - [x] direct to preview page on submission
-  - [ ] Endpoint for creating an rss feed
+  - [x] Endpoint for creating an rss feed
   - [ ] use LLM API to construct an initial RSS feed to load into the editor
   - [ ] implement caching for each rss feed to reduce the use of the LLM for initial construction
 - [ ] Add authn & authz with Authelia
@@ -160,3 +136,5 @@ looking back, it probably would have been a good idea to use some kind of framew
 Actually, once I refactored everything into classes, the code became a lot more readable and easier to work with. love that!
 
 I decided to get rid of the option for the user to select the html attribute they want to be incorporated into the feed, because most of the time it will be textContent, or href for the article link. This does make it impossible to use in some edge cases, but I feel like this is a fair trade because it allows for the user to do the entire process without any knowledge of HTML/CSS. This will open the application up to a much larger userbase, as there are a good chunk of people who know what an rss feed is, but are not technically inclined and have little to no knowledge of html & css.
+
+I opted to create a db initialization script instead of directly inclduing the db file inside the version control system, because I don't need a substantial amount of seed data, and I want to be able to use the system locally without messing up the repository.

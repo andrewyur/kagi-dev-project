@@ -1,10 +1,10 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, g
 from urllib.parse import quote
-from api.routes import api_bp
 from auth.routes import auth_bp
 from edit.routes import edit_bp
 from rss.routes import rss_bp
 from proxy.routes import proxy_bp
+import os
 
 
 app = Flask(__name__)
@@ -28,9 +28,12 @@ def catch_url(url: str):
     # redirect to edit page
     return redirect(f"/edit?url-input={quote(url, safe='')}")
     
+@app.teardown_appcontext
+def close_db(error):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
-
-app.register_blueprint(api_bp, url_prefix="/api")
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(edit_bp, url_prefix="/edit")
 app.register_blueprint(rss_bp, url_prefix="/rss")
@@ -38,4 +41,7 @@ app.register_blueprint(proxy_bp, url_prefix="/proxy")
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    if not os.path.exists("rss.db"):
+        print("initialize the database first!")
+    else:
+        app.run(debug=True, port=5001)

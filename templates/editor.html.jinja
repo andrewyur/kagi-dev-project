@@ -14,8 +14,7 @@
 {% endmacro %}
 
 {% macro item_field(item_name, item_label, required=True) %}
-   {{ field("item-" ~ item_name ~ "-query", item_label, "The HTML elements that contain the " ~ item_label ~ " of each RSS item. Click on the box and select two elements from the webpage, and the rest will be shown highlighted in blue.", required=required) }}
-   <input type="text" id="item-{{item_name}}-attribute" name="item-{{item_name}}-attribute" style="visibility:hidden; position:absolute; z-index:-100;"/>
+   {{ field("item_" ~ item_name, item_label, "The HTML elements that contain the " ~ item_label ~ " of each RSS item. Click on the box and select two " ~ item_label ~ "s from the webpage, and the rest will be shown highlighted in blue.", required=required) }}
 {% endmacro %}
 
 {% block content %}
@@ -37,8 +36,8 @@
          <fieldset id="channel-fieldset">
             <legend>RSS Channel Attributes</legend>
             <div class="fieldset-item-container">
-               {{ field("channel-title", "Title", "The title of the RSS channel") }}
-               {{ field("channel-description", "Description", "The description of the RSS channel") }}
+               {{ field("channel_title", "Title", "The title of the RSS channel") }}
+               {{ field("channel_description", "Description", "The description of the RSS channel") }}
                <input type="text" id="homepage" name="homepage" style="visibility:hidden; position:absolute; z-index:-100;"/>
             </div>
          </fieldset>
@@ -151,7 +150,7 @@
 
       constructor(highlighter, itemName) {
          this.highlighter = highlighter
-         this.inputElement = document.getElementById(`channel-${itemName}`)
+         this.inputElement = document.getElementById(`channel_${itemName}`)
 
          this.inputElement.addEventListener("click", () => {
             this.start()
@@ -215,7 +214,7 @@
       constructor(highlighter, itemName, elementAggregator, attribute="textContent") {
          this.highlighter = highlighter
          this.attribute = attribute
-         this.inputElement = document.getElementById(`item-${itemName}-query`)
+         this.inputElement = document.getElementById(`item_${itemName}`)
 
          // value may have already been filled by the LLM or from the preview screen
          if(this.inputElement.value != ""){
@@ -225,7 +224,6 @@
             this._currentlySelecting = null
          }
 
-         document.getElementById(`item-${itemName}-attribute`).value = attribute
          this.elementAggregator = elementAggregator
          this.itemName = itemName
 
@@ -452,7 +450,7 @@
          okButton.disabled = false
          okButton.addEventListener("click", () => {
             document.getElementById("instructions-modal").close()
-            document.getElementById("channel-title").focus()
+            document.getElementById("channel_title").focus()
          })
       }
 
@@ -633,7 +631,7 @@
       background-color: #0000ff;
    }
 
-   #item-title-query, #item-link-query, #item-pubDate-query, #item-description-query {
+   #item_title, #item_link, #item_pubDate, #item_description {
       color: transparent
    }
 
