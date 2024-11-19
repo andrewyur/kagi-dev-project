@@ -4,7 +4,7 @@ import sqlite3
 
 def get_db_conn() -> sqlite3.Connection:
     if "db" not in g:
-        g.db = sqlite3.connect("rss.db")
+        g.db = sqlite3.connect("src/rss.db")
         g.db.row_factory = dict_factory
     return g.db
 

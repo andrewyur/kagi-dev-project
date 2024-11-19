@@ -65,10 +65,6 @@
    <button id="error-ok">Ok</button>
 </dialog>
 
-<dialog id="no-url-modal">
-   <p>A url was not provided!</p>
-</dialog>
-
 <dialog id="instructions-modal">
    <h1>Editor Screen Instructions</h1>
 
@@ -84,9 +80,13 @@
       <li>Once highlighted, proceed to the next attribute by repeating the above steps.</li>
   </ol>
 
+  <p><b>Each of these selections should return the same amount of items!</b> Otherwise, the RSS builder would not be able to tell how to match the items up into RSS feed items.</p>
+
   <p>You can view these instructions at any time by pressing the Help! button in the bottom right corner of the screen.</p>
 
-   <button id="instructions-ok" disabled>Loading...</button>
+   <div id="instructions-ok-div">
+      <button id="instructions-ok" disabled>Loading...</button>
+   </div>
 </dialog>
 
 <script>
@@ -411,7 +411,6 @@
          const searchParams = new URLSearchParams(window.location.search)
          
          if(!searchParams.has("url-input")) {
-            document.getElementById("no-url-modal").showModal()
             return
          }
 
@@ -688,6 +687,22 @@
    dialog {
       max-width: 40vw;
    }
+
+   #instructions-ok-div {
+      margin-top: 50px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+   }
+
+   #instructions-ok {
+      text-align: center;
+      width: 200px;
+      height: 50px;
+      font-size: large;
+   }
+
 </style>
 
 {% endblock %}

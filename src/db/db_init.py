@@ -3,15 +3,10 @@ import os
 
 
 def init_db():
-    db_path = "rss.db"
+    db_path = "src/rss.db"
 
-    if os.path.exists("rss.db"):
-        choice = input(f"delete database found at {db_path}? (y/n)")
-
-        if choice == "y":
-            os.remove(db_path)
-        else:
-            exit()
+    if os.path.exists(db_path):
+        exit()
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()

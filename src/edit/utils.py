@@ -58,7 +58,7 @@ class Queries(BaseModel):
 async def generate_css_subqueries(list_html: str):
 
     if "openai" not in g:
-        g.openai = AsyncOpenAI(api_key=os.environ.get("API_KEY"))
+        g.openai = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
     client = g.openai
 
@@ -93,7 +93,7 @@ assume that the queries you return will be prepended onto a query identifying th
 async def generate_static_info(text: str):
 
     if "openai" not in g:
-        g.openai = AsyncOpenAI(api_key=os.environ.get("API_KEY"))
+        g.openai = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
     client = g.openai
 

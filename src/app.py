@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from flask import Flask, render_template, redirect, g, session
 from urllib.parse import quote
 from edit.routes import edit_bp
@@ -11,7 +13,7 @@ import uuid
 app = Flask(__name__)
 
 # need this for message flashing
-app.secret_key = os.environ["SECRET_KEY"]
+app.secret_key = os.environ["FLASK_SECRET"]
 
 
 @app.route("/")
@@ -51,8 +53,21 @@ app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(proxy_bp, url_prefix="/proxy")
 
 
-if __name__ == "__main__":
-    if not os.path.exists("rss.db"):
+def run_prod():
+    from waitress import serve
+
+    if not os.path.exists("src/rss.db"):
+        print("initialize the database first!")
+    else:
+        serve(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
+
+def run_dev():
+    if not os.path.exists("src/rss.db"):
         print("initialize the database first!")
     else:
         app.run(debug=True, port=5001)
+
+
+if __name__ == "__main__":
+    run_dev()

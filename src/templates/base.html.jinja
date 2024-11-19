@@ -91,6 +91,7 @@
         {% endblock %}
     </head>
     <body>
+        {% block content %}
         <header>
             <a href="/">Website to RSS Converter</a>
             <a href="/user">Your Feeds</a>
@@ -104,6 +105,6 @@
                 </ul>
             {% endif %}
         {% endwith %}
-        {% block content %}{% endblock %}
+        {% endblock %}
     </body>
 </html>

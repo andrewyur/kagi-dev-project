@@ -1,0 +1,27 @@
+[project]
+name = "kagi-dev-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "asgiref>=3.8.1",
+    "cssselect>=1.2.0",
+    "flask>=3.1.0",
+    "lxml>=5.3.0",
+    "nanoid>=2.0.0",
+    "nh3>=0.2.18",
+    "openai>=1.54.5",
+    "python-dateutil>=2.9.0.post0",
+    "requests>=2.32.3",
+    "waitress>=3.0.2",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+prod = "app:run_prod"
+dev = "app:run_dev"
+init-db = "db.db_init:init_db"

@@ -16,7 +16,8 @@ To run in development mode:
 
 To run in production mode:
 
-`nix flake prod` <!--or whatever-->
+`docker build --no-cache -t kagi-dev --build-arg PORT=8000 .`
+`docker run -it --env-file .env --rm -p 8000:8000 kagi-dev`
 
 ## Design Outline
 
@@ -34,7 +35,7 @@ To persist data, I will likely be using SQLite, because it is very easy to use a
 
 For authentication, I only need something simple and will be using permanent cookies to store a unique user id
 
-To deploy it, I will be creating a nix environment, and running it on a cloud vm (likely nixos on a google compute instance). I already have a domain name I can use under google cloud provider, so I will provision a subdomain for it to use.
+To deploy it, I will be developing using nix, and running the environment inside a nixos docker image in gcr. I already have a domain name I can use under google cloud provider, so I will provision a subdomain for it to use.
 
 Routing structure:
 
@@ -66,7 +67,7 @@ data schema:
 
 - [x] Setup flask server
   - [x] Setup blueprints for each routing section
-- [ ] add main functionality
+- [x] add main functionality
   - [x] make a url input screen
   - [x] make rss feeds return data from the database
     - [x] route for generating a preview of data stored in browser session
@@ -88,19 +89,22 @@ data schema:
     - [x] structured output for openai
     - [x] add channel title and channel description queries
   - [x] implement caching for each rss feed to reduce the use of the LLM for initial construction
-- [x] go over code, and make things readable
+- [ ] go over code, and make things readable
   - [x] make further use of message flashing
   - [x] better exception handling
+  - [ ] update route map in readme
 - [x] Add authn & authz with cookies
   - [x] add a nav bar with login/logout buttons
   - [x] CRUD operations for feeds in the user api
   - [x] page to display all feeds created by a user
   - [x] require user to be the creator of the feed to edit
 - [ ] Configure everything for prod
-  - [ ] production server
+  - [x] production server
+  - [x] move files into src
+  - [x] nix flake stuff
+  - [x] dockerfile
+    - secrets managment
   - [ ] js bundler/minifiers & other file compression
-  - [ ] nix flake stuff
-    - platform & architecture should be an input
 - [ ] deploy to cloud
 - [ ] test with RSS reader
 - [ ] extra feature: atom feed compatibility (is this already compatible with atom feeds?)

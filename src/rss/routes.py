@@ -86,7 +86,6 @@ def edit_feed():
         return redirect("/")
 
     if feed_creator["user_id"] != session["user_id"]:
-        print(feed_creator, session["user_id"])
         flash("You don't have permission to edit this feed!")
         return redirect("/")
 
@@ -137,8 +136,6 @@ def preview_feed():
         return redirect("/")
 
     feed_id = request.form.get("feed_id")
-
-    print(feed_id)
 
     preview_data_dump = preview_data.model_dump()
 

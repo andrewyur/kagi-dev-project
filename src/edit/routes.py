@@ -3,7 +3,7 @@ from urllib.parse import quote
 from edit.utils import generate_rss_data
 from rss.utils import create_rss_object, RssData
 from db.utils import get_db_conn
-import requests
+from proxy.utils import check_request
 import lxml.html as html
 from asgiref.sync import sync_to_async
 
@@ -13,12 +13,35 @@ edit_bp = Blueprint("edit", __name__)
 
 @edit_bp.route("/", methods=["GET"])
 def edit_screen():
-    return render_template("editor.html.jinja", generate_css_queries=True)
+
+    url = request.args.get("url-input")
+
+    if url == "" or url is None:
+        flash("No url provided!")
+        return redirect("/")
+
+    response = check_request(url)
+
+    if isinstance(response, str):
+        flash(f"Invalid url: {response}")
+        return redirect("/")
+
+    return render_template("editor.html.jinja")
 
 
 @edit_bp.route("/", methods=["POST"])
 def edit_screen_with_data():
-    print(request.form.to_dict().keys())
+    url = request.args.get("url-input")
+
+    if url == "" or url is None:
+        flash("No url provided!")
+        return redirect("/")
+
+    response = check_request(url)
+
+    if isinstance(response, str):
+        flash(f"Invalid url: {response}")
+        return redirect("/")
 
     return render_template("editor.html.jinja", input_data=request.form.to_dict())
 
@@ -28,19 +51,14 @@ async def initial_css_queries():
 
     url = request.args.get("url-input")
 
-    if url is None:
-        flash("Did not recieve a URL!")
+    if url == "" or url is None:
+        flash("No url provided!")
         return redirect("/")
 
-    response: requests.Response
-    try:
-        response = requests.get(url, headers={"user-agent": "andrew's rss converter"})
-    except requests.RequestException:
-        flash("Did not recieve a response from the URL!")
-        return redirect("/")
+    response = check_request(url)
 
-    if not response.headers["Content-Type"].startswith("text/html"):
-        flash("expected an html response from the given URL!")
+    if isinstance(response, str):
+        flash(f"Invalid url: {response}")
         return redirect("/")
 
     document: html.HtmlElement = html.document_fromstring(response.text)
@@ -59,10 +77,8 @@ async def initial_css_queries():
 
     rss_data: RssData | str
     if db_fetch_response is not None:
-        print("fetching from DB")
         rss_data = RssData(**db_fetch_response)
     else:
-        print("calling LLM API")
         rss_data = await generate_rss_data(url, document)
 
     if isinstance(rss_data, str):

@@ -1,5 +1,5 @@
 from lxml import html
-import requests
+from proxy.utils import check_request
 from email.utils import formatdate
 from time import mktime
 from dateutil import parser
@@ -86,13 +86,10 @@ def create_rss_object(
     document: html.HtmlElement
     if input_document is None:
 
-        # might be better to forward the user-agent header from the route request
-        response = requests.get(
-            rss_data_dump["homepage"], headers={"user-agent": "andrew's rss converter"}
-        )
+        response = check_request(rss_data_dump["homepage"])
 
-        if not response.ok:
-            return "There was an error fetching from the supplied webpage!"
+        if isinstance(response, str):
+            return response
 
         document: html.HtmlElement = html.document_fromstring(response.text)
     else:
