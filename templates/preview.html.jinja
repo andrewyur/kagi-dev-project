@@ -29,6 +29,9 @@
 </ul>
 
 <form action="/" method="POST">
+   {% if preview_data['feed_id'] %}
+   <input type="text" id="feed_id" name="feed_id" value="{{preview_data['feed_id']}}"/>
+   {% endif %}
    <input type="text" id="homepage" name="homepage" value="{{preview_data['homepage']}}"/>
    <input type="text" name="channel_title" value="{{preview_data['channel_title']}}"/>
    <input type="text" name="channel_description" value="{{preview_data['channel_description']}}"/>
@@ -58,9 +61,16 @@
 
 const form = document.querySelector("form")
 
-document.getElementById("yes").addEventListener("click", () => {
-   form.action = "/rss/create"
-})
+if(document.getElementById("feed_id") != null){
+   const feed_id = document.getElementById("feed_id").value
+   document.getElementById("yes").addEventListener("click", () => {
+      form.action = "/rss/edit"
+   })
+}else{
+   document.getElementById("yes").addEventListener("click", () => {
+      form.action = "/rss/create"
+   })
+}
 
 document.getElementById("no").addEventListener("click", () => {
    form.action = `/edit/?url-input=${encodeURIComponent(document.getElementById("homepage").value)}`

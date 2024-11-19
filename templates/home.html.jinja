@@ -1,0 +1,116 @@
+{% extends "content.html.jinja" %}
+
+{% block content_ %}
+{{ super() }}
+
+<h1>Your RSS Feeds</h1>
+<p>User identification is automatic and entirely cookie based. This means you can only access your feeds from the exact device and browser you created them on, and if you clear cookies on your browser, you will lose editing access to all of your feeds.</p>
+
+<div id="feeds">
+{% for feed in feeds %}
+   <div class="feed">
+      <p>{{feed.channel_title}}</p>
+      <div class="buttons">
+         <form action="{{feed.edit_url}}" method="POST">
+            <input type="hidden" name="feed_id" value="{{feed.feed_id}}">
+            <input type="hidden" name="channel_title" value="{{feed.channel_title}}">
+            <input type="hidden" name="channel_description" value="{{feed.channel_description}}">
+            <input type="hidden" name="item_title" value="{{feed.item_title}}">
+            <input type="hidden" name="item_link" value="{{feed.item_link}}">
+            <input type="hidden" name="item_description" value="{{feed.item_description}}">
+            <input type="hidden" name="item_pubDate" value="{{feed.item_pubDate}}">
+            <button type="submit" class="edit-button">Edit</button>
+         </form>
+         <form action="/rss/delete/{{feed.feed_id}}" method="Post">
+            <button type="submit" class="delete-button">Delete</button>
+         </form>
+         <button class="copy-button" feed-id="{{feed.feed_id}}">Copy Link</button>
+      </div>
+   </div>
+{% endfor %}
+</div>
+
+<div id="copied">
+   <p>Copied</p>
+</div>
+
+<script>
+   const copied = document.getElementById("copied")
+
+   document.querySelectorAll(".copy-button").forEach((button) => {
+      button.addEventListener("click", (e) => {
+         navigator.clipboard.writeText(`${window.location.origin}/rss/feed/${e.target.getAttribute('feed-id')}`)
+         copied.className = 'animate'
+         setTimeout(() => copied.className = '', 1000)
+      })
+   })
+</script>
+
+{% endblock %}
+
+
+{% block head_ %}
+{{ super() }}
+
+<style>
+
+#feeds {
+   padding: 50px;
+   margin: auto;
+   max-width: 500px;
+}
+
+.feed {
+   border-radius: 5px;
+   background-color: var(--accent);
+   padding: 10px;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   justify-content: space-between;
+   margin-bottom: 10px;
+   gap: 50px;
+}
+
+.feed > * {
+   padding: 0;
+   margin: 0;
+}
+
+.buttons {
+   display: flex;
+   flex-direction: row;
+   gap:10px
+}
+
+.edit-button, .delete-button {
+   background-color: var(--accent);
+   border: 0;
+}
+
+#copied {
+   position: fixed;
+   bottom: 10px;
+   left: 0;
+   right: 0;
+   align-content: center;
+   opacity: 0;
+}
+   
+#copied.animate {
+   animation: 1s forwards fadeOut;
+}
+
+#copied p {
+   background-color: var(--background-light);
+   margin: auto;
+   width: fit-content;
+   padding: 10px;
+   border-radius: 5px;
+}
+
+
+
+</style>
+
+{% endblock%}

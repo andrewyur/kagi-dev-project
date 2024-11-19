@@ -20,6 +20,7 @@ def init_db():
         """
       CREATE TABLE IF NOT EXISTS feeds (
          feed_id CHAR(21) PRIMARY KEY NOT NULL,
+         user_id TEXT NOT NULL,
          homepage VARCHAR(50) NOT NULL,
          channel_title VARCHAR(50) NOT NULL,
          channel_description TEXT NOT NULL,

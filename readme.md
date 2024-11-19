@@ -32,7 +32,7 @@ The frontend is around Jinja2, the templating engine built into flask. Any JS & 
 
 To persist data, I will likely be using SQLite, because it is very easy to use and set up, and is very portable.
 
-For authentication, I only need something simple and will likely be using Authelia.
+For authentication, I only need something simple and will be using permanent cookies to store a unique user id
 
 To deploy it, I will be creating a nix environment, and running it on a cloud vm (likely nixos on a google compute instance). I already have a domain name I can use under google cloud provider, so I will provision a subdomain for it to use.
 
@@ -87,21 +87,15 @@ data schema:
     - [x] migrate RssData and RssFeed classes to pydantic
     - [x] structured output for openai
     - [x] add channel title and channel description queries
-  - [ ] implement caching for each rss feed to reduce the use of the LLM for initial construction
-- [ ] go over code, and make things readable
-  - [ ] move the classes into their own js files in static/
-  - [ ] standardize url-input and input-url
-  - [ ] make further use of message flashing
-  - [ ] better exception handling
-- [ ] Add authn & authz with Authelia
-  - [ ] add auth modals to base html layout and their corresponding js
-    - [ ] login modal
-    - [ ] reset password modal
-    - [ ] figure out how to only load js when the modals are opened
-  - [ ] add a nav bar with login/logout buttons
-  - [ ] CRUD operations for feeds in the user api
-  - [ ] page to display all feeds created by a user
-  - [ ] require user to be the creator of the feed to edit
+  - [x] implement caching for each rss feed to reduce the use of the LLM for initial construction
+- [x] go over code, and make things readable
+  - [x] make further use of message flashing
+  - [x] better exception handling
+- [x] Add authn & authz with cookies
+  - [x] add a nav bar with login/logout buttons
+  - [x] CRUD operations for feeds in the user api
+  - [x] page to display all feeds created by a user
+  - [x] require user to be the creator of the feed to edit
 - [ ] Configure everything for prod
   - [ ] production server
   - [ ] js bundler/minifiers & other file compression
@@ -152,3 +146,7 @@ I decided to get rid of the option for the user to select the html attribute the
 I opted to create a db initialization script instead of directly inclduing the db file inside the version control system, because I don't need a substantial amount of seed data, and I want to be able to use the system locally without messing up the repository.
 
 For the llm, I originally decided to use google gemini's free api, but it was so slow (>10s per prompt) and lacked the ability to send concurrent requests so i decided to switch to openai.
+
+The javascript inside the script tag for the editor page has grown to an unweildy length. I was debating about splitting it into multiple files, and calling them all in as separate script tags to make the code more readable, but nearly all of the code is very tightly coupled with the html of the page, and is not going to be re used at all, so I thought it would make more sense in this scenario to keep all of the relevant code in one file, and try to make it more readable with comments.
+
+A username and password based auth system would be overkill for this app I think, so i will be using cookies instead of cooking up my own auth system and integration. This does mean that a user can only access their feeds from the same browser they were created in but it immensely simplifies matters for me, and simplifies the experience for the user as well. Of course, this would not be suitable for a fully fledged, user-facing application, and in that case, I would expect to have access to kagi's SSO provider to identify users, or to have the time to build my own authentication system.

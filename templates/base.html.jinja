@@ -13,6 +13,7 @@
                 font-weight: 400;
 
                 --background: #242424;
+                --background-light: #474747;
                 --text: rgba(255, 255, 255, 0.87);
                 --accent: #a16767;
 
@@ -49,11 +50,34 @@
                 border-radius: 5px;
                 z-index: 100000;
                 animation: fadeOut 10s forwards;
+                max-width: 30vw;
             }
 
             .flashes li {
                 padding: 10px;
             }
+
+            header {
+                position: sticky;
+                top: 0;
+                height: 10vh;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                width: 100%;
+                justify-content: center;
+                gap: 40vw;
+                background-color: var(--background-light);
+                z-index: 100;
+            }
+
+            header a:visited, header a:active, header a {
+                font-size: large;
+                text-decoration: none;
+                color: var(--text);
+            }
+
+
 
             @keyframes fadeOut {
                 from {
@@ -67,6 +91,10 @@
         {% endblock %}
     </head>
     <body>
+        <header>
+            <a href="/">Website to RSS Converter</a>
+            <a href="/user">Your Feeds</a>
+        </header>
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <ul class="flashes">

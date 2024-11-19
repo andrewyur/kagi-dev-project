@@ -33,12 +33,15 @@
    </div>
    <div id="feed-constructor">
       <form id="feed-constructor-form" action="/rss/preview" method="post">
+         {% if input_data and input_data.feed_id %}
+            <input type="hidden" value="{{input_data.feed_id}}" name="feed_id" />
+         {% endif %}
+         <input type="hidden" id="homepage" name="homepage"/>
          <fieldset id="channel-fieldset">
             <legend>RSS Channel Attributes</legend>
             <div class="fieldset-item-container">
                {{ field("channel_title", "Title", "The title of the RSS channel") }}
                {{ field("channel_description", "Description", "The description of the RSS channel") }}
-               <input type="text" id="homepage" name="homepage" style="visibility:hidden; position:absolute; z-index:-100;"/>
             </div>
          </fieldset>
          <fieldset id="item-fieldset">
@@ -87,6 +90,11 @@
 </dialog>
 
 <script>
+
+   // ------------------------------------------------------------------------------------------------------------------
+   //   This class governs the highlighting of elements within the iframe
+   // ------------------------------------------------------------------------------------------------------------------
+
    class Highlighter {
       static red = "#ff0000" // first element
       static green = "#00ff00" // second element
@@ -118,6 +126,10 @@
       }
    }
 
+   // ------------------------------------------------------------------------------------------------------------------
+   //    This is the class which forwards user input to the currently focused DoubleClickSelector classes
+   // ------------------------------------------------------------------------------------------------------------------
+
    class ElementAggregator {
       element = document.getElementById("element-aggregator")
       resetElement = document.getElementById("reset")
@@ -141,6 +153,12 @@
          this.element.style.visibility = "hidden"
       }
    }
+
+
+   // ------------------------------------------------------------------------------------------------------------------
+   //    This is the class that allows the user to paste textContent of certain elements into channel attribute fields
+   // ------------------------------------------------------------------------------------------------------------------
+
 
    class StaticContentSelector {
       inputElement
@@ -192,6 +210,12 @@
          }
       }
    }
+
+
+   // ------------------------------------------------------------------------------------------------------------------
+   //    This is the class that defines the flow for selecting repeating elements within the iframe for the rss item attributes
+   // ------------------------------------------------------------------------------------------------------------------
+
 
    class DoubleClickSelector {
       inputElement
@@ -367,6 +391,11 @@
       }
    }
 
+   // ------------------------------------------------------------------------------------------------------------------
+   //    This is the class that governs the initialization and event handling of the iframe element and its document context
+   // ------------------------------------------------------------------------------------------------------------------
+
+
    class Iframe {
       handle = document.getElementById("selector")
       documentHandle = null
@@ -520,6 +549,7 @@
       }
 
       // should probably do some more validation, like checking to see if the attribute selected is present on every query item, but this should be fine for now
+
    })
 
 </script>
@@ -534,7 +564,7 @@
       display: grid;
       grid-template-columns: 2fr 1fr;
       width: 100vw;
-      height: 100vh;
+      height: 90vh;
       overflow: hidden;
    }
 

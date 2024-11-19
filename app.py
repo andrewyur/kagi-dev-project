@@ -1,10 +1,11 @@
-from flask import Flask, render_template, redirect, g
+from flask import Flask, render_template, redirect, g, session
 from urllib.parse import quote
-from auth.routes import auth_bp
 from edit.routes import edit_bp
 from rss.routes import rss_bp
 from proxy.routes import proxy_bp
+from user.routes import user_bp
 import os
+import uuid
 
 
 app = Flask(__name__)
@@ -29,6 +30,14 @@ def catch_url(url: str):
     return redirect(f"/edit/gen?url-input={quote(url, safe='')}")
 
 
+# creates a userid if one does not exist, stores it in the session, and makes it permanent
+@app.before_request
+def gen_user_id():
+    if "user_id" not in session:
+        session["user_id"] = str(uuid.uuid4())
+        session.permanent = True
+
+
 @app.teardown_appcontext
 def close_db(error):  # type: ignore
     db = g.pop("db", None)
@@ -36,9 +45,9 @@ def close_db(error):  # type: ignore
         db.close()
 
 
-app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(edit_bp, url_prefix="/edit")
 app.register_blueprint(rss_bp, url_prefix="/rss")
+app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(proxy_bp, url_prefix="/proxy")
 
 

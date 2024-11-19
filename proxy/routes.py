@@ -13,9 +13,9 @@ def reflect(proxy_url):
         response = requests.get(
             proxy_url, headers={"user-agent": "andrew's rss converter"}
         )
-    except requests.exceptions.InvalidURL:
+    except requests.RequestException:
         return (
-            render_template("error.html.jinja", message="Malformed URL supplied!"),
+            render_template("error.html.jinja", message="Invalid URL supplied!"),
             400,
         )
 

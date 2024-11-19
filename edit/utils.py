@@ -57,8 +57,6 @@ class Queries(BaseModel):
 
 async def generate_css_subqueries(list_html: str):
 
-    print("started css subqueries")
-
     if "openai" not in g:
         g.openai = AsyncOpenAI(api_key=os.environ.get("API_KEY"))
 
@@ -86,8 +84,6 @@ assume that the queries you return will be prepended onto a query identifying th
         response_format=Queries,
     )
 
-    print("finished css subqueries")
-
     if completion.choices is None or completion.choices[0].message.parsed is None:
         return None
 
@@ -95,8 +91,6 @@ assume that the queries you return will be prepended onto a query identifying th
 
 
 async def generate_static_info(text: str):
-
-    print("starting static info")
 
     if "openai" not in g:
         g.openai = AsyncOpenAI(api_key=os.environ.get("API_KEY"))
@@ -117,8 +111,6 @@ async def generate_static_info(text: str):
         ],
         response_format=StaticInfo,
     )
-
-    print("finished static info")
 
     if completion.choices is None or completion.choices[0].message.parsed is None:
         return None
@@ -160,9 +152,6 @@ async def generate_rss_data(url: str, document: html.HtmlElement) -> RssData | s
                 v.strip(list_el.tag)
                 v.strip(" > ")
                 css_subqueries[k] = v
-
-        print("subqueries:", css_subqueries)
-        print("static info:", static_info)
 
         return RssData(
             homepage=url,
