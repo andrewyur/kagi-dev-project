@@ -51,6 +51,8 @@ async def initial_css_queries():
 
     url = request.args.get("url-input")
 
+    print(url)
+
     if url == "" or url is None:
         flash("No url provided!")
         return redirect("/")

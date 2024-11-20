@@ -4,18 +4,16 @@ By: Andrew Yurovchak
 
 ## How to run
 
-export your google genai api key as the `API_KEY` env var
+create a .env file containing your openai api key, and a random string for flask to use to encrypt its session cookie.
 
 To run in development mode (given you have some way of running commands defined in pyproject.toml):
 
 - activate the shell with `nix develop`
-  - then run `python -m venv .venv`, `source .venv/bin/activate`, and `pip install -r requirements.txt`
+  - install the requirements listed in pyproject.toml
 - run the db init script `db-init` to initialize the database
 - run `dev` to start the development server
 
-To run in production mode:
-
-`docker-compose up`
+To run in production mode: `docker-compose up`
 
 ## Design Outline
 
@@ -25,20 +23,21 @@ The majority of the function of this app happens on the backend. I am using pyth
 - This is not an application where performance is critical
   - If I write my code well it will be fast enough
 - I already know python, and how to use Flask
-- It is fun to write
+- It is fun to write[^1]
 
-The frontend is around Jinja2, the templating engine built into flask. Any JS & CSS needed will be located directly in the template files as `<script>` and `<style>` elements.
+[^1]: it actually turned out to not be so fun once the application grew past a couple files, using a typing system made it a little better but I think a statically typed language might have been a better choice
 
-To persist data, I will likely be using SQLite, because it is very easy to use and set up, and is very portable.
+The frontend is built around Jinja2, the templating engine built into flask. Any JS & CSS needed is located directly in the template files as `<script>` and `<style>` elements.
 
-For authentication, I only need something simple and will be using permanent cookies to store a unique user id
+To persist data, I am using SQLite, because it is extremely easy to use and set up, and I don't need the database to scale at all.
 
-To deploy it, I be running it inside a docker image in gcr. I already have a domain name I can use under google cloud provider, so I will provision a subdomain for it to use.
+For authentication, I only need something simple and am using permanent cookies to store a unique user id.
 
-Routing structure:
+The application is deployed as a docker container running on google cloud run, with the database located in a cloud storage bucket mounted as a volume. I already have a domain name under google cloud provider, and so I provisioned a subdomain for it to use.
 
-├──
-└──
+The backend uses lxml to extract data from the provided page using css queries. To create a feed, the user selects elements of the page, which the frontend converts to css queries, and submits them to the backed to be stored in the database. Every time an rss endpoint with a specific id recieves a request, the backend will find the css queries associated with the feed id in the database, use the queries to select html elements from the website, and then return the items, formatted into an xml document with jinja.
+
+## Routing structure
 
 ```md
 /                  -> html page where user can input a link to edit
@@ -55,12 +54,12 @@ Routing structure:
 /proxy             -> proxy page for iframe, so i can get around same-origin policy
 ```
 
-The backend uses lxml to extract data from the provided page using css queries. To create a feed, the user will direct the frontend to submit css queries to the backend, which are stored in the database. Every time an rss endpoint with a specific id recieves a request, the backend will find the css queries associated with the id in the database, use the queries on the website, and then return the items, formatted into an xml document with jinja.
-
-data schema:
+## Data schema
 
 | Column Name | Data Type | Description |
 |-|-|-|
+| `feed_id` | CHAR(21) | unique identifier for the feed (primary key) |
+| `user_id` | TEXT | identifier of the user who created the feed |
 | `homepage` | VARCHAR(50) | URL of the of the website to be converted |
 | `channel-title` | VARCHAR(50) | Title of the RSS feed |
 | `channel-description` | TEXT | Description of the RSS feed |
@@ -115,7 +114,9 @@ data schema:
   - [x] use only db path accross project
   - [x] store db in volume in docker
   - [x] GCP cloud storage bucket
-- [ ] test with RSS reader
+- [x] Fix bugs in prod
+  - [x] POST request morphing through redirects
+- [x] test on guinea pig
 - [ ] extra feature: atom feed compatibility (is this already compatible with atom feeds?)
 
 ## Development Notes
