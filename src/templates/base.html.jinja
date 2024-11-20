@@ -91,6 +91,7 @@
         {% endblock %}
     </head>
     <body>
+        {% autoescape True %}
         {% block content %}
         <header>
             <a href="/">Website to RSS Converter</a>
@@ -106,5 +107,6 @@
             {% endif %}
         {% endwith %}
         {% endblock %}
+        {% endautoescape %}
     </body>
 </html>

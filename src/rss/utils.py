@@ -190,10 +190,16 @@ def create_rss_object(
                 f"{parsed_uri.scheme}://{parsed_uri.netloc}/{item.link.strip("/")}"
             )
 
+    link = request.base_url
+
+    # google cloud provider reverse proxy adds https
+    if link.startswith("http"):
+        link = link.replace("http", "https", 1)
+
     rss_channel = RssChannel(
         title=rss_data_dump["channel_title"],
         description=rss_data_dump["channel_description"],
-        link=request.base_url,
+        link=link,
         lastBuildDate=format_date(latest_date),
         pubDate=format_date(earliest_date),
     )

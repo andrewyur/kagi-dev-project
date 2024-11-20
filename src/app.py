@@ -57,6 +57,8 @@ def run_prod():
     from waitress import serve
     from db.db_init import init_db
 
+    os.environ["FLASK_ENV"] = "production"
+
     init_db()
 
     serve(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))

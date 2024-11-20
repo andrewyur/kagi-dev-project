@@ -95,10 +95,10 @@ data schema:
     - [x] structured output for openai
     - [x] add channel title and channel description queries
   - [x] implement caching for each rss feed to reduce the use of the LLM for initial construction
-- [ ] go over code, and make things readable
+- [x] go over code, and make things readable
   - [x] make further use of message flashing
   - [x] better exception handling
-  - [ ] update route map in readme
+  - [x] update route map in readme
 - [x] Add authn & authz with cookies
   - [x] add a nav bar with login/logout buttons
   - [x] CRUD operations for feeds in the user api
@@ -109,13 +109,12 @@ data schema:
   - [x] move files into src
   - [x] nix flake stuff
   - [x] dockerfile
-    - secrets managment
   - [ ] js bundler/minifiers & other file compression
-- [ ] deploy to cloud
+- [x] deploy to cloud
   - [x] docker compose file
   - [x] use only db path accross project
   - [x] store db in volume in docker
-  - [ ] GCP cloud storage bucket
+  - [x] GCP cloud storage bucket
 - [ ] test with RSS reader
 - [ ] extra feature: atom feed compatibility (is this already compatible with atom feeds?)
 
