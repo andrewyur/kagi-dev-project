@@ -40,6 +40,16 @@ def gen_user_id():
         session.permanent = True
 
 
+# need this in production to prevent redirects through http, which cause POST request bodies to be lost
+@app.after_request
+def specify_secure_redirect(response):
+    if os.environ.get("FLASK_ENV") == "production":
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains; preload"
+        )
+    return response
+
+
 @app.teardown_appcontext
 def close_db(error):  # type: ignore
     db = g.pop("db", None)
