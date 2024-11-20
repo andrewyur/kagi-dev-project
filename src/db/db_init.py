@@ -3,10 +3,10 @@ import os
 
 
 def init_db():
-    db_path = "src/rss.db"
+    db_path = os.getenv("DB_PATH", "src/rss.db")
 
     if os.path.exists(db_path):
-        exit()
+        return
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()

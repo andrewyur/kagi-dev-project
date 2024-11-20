@@ -1,0 +1,21 @@
+name: rss-converter
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PORT: 8080 
+        DB_PATH: /db/rss.db
+
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - rss-db:/db
+
+volumes:
+  rss-db:
+    

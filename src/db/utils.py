@@ -1,10 +1,13 @@
 from flask import g
 import sqlite3
+import os
+
+db_path = os.getenv("DB_PATH", "src/rss.db")
 
 
 def get_db_conn() -> sqlite3.Connection:
     if "db" not in g:
-        g.db = sqlite3.connect("src/rss.db")
+        g.db = sqlite3.connect(db_path)
         g.db.row_factory = dict_factory
     return g.db
 

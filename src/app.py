@@ -55,15 +55,17 @@ app.register_blueprint(proxy_bp, url_prefix="/proxy")
 
 def run_prod():
     from waitress import serve
+    from db.db_init import init_db
 
-    if not os.path.exists("src/rss.db"):
-        print("initialize the database first!")
-    else:
-        serve(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+    init_db()
+
+    serve(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
 
 
 def run_dev():
-    if not os.path.exists("src/rss.db"):
+    db_path = os.getenv("DB_PATH", "src/rss.db")
+
+    if not os.path.exists(db_path):
         print("initialize the database first!")
     else:
         app.run(debug=True, port=5001)

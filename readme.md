@@ -6,18 +6,16 @@ By: Andrew Yurovchak
 
 export your google genai api key as the `API_KEY` env var
 
-To run in development mode:
+To run in development mode (given you have some way of running commands defined in pyproject.toml):
 
 - activate the shell with `nix develop`
-  - or if you dont have nix, install a recent version of python and sqlite
   - then run `python -m venv .venv`, `source .venv/bin/activate`, and `pip install -r requirements.txt`
-- run `python3 db/db-init.py` to initialize the database
-- run `python3 app.py` to start the development server
+- run the db init script `db-init` to initialize the database
+- run `dev` to start the development server
 
 To run in production mode:
 
-`docker build --no-cache -t kagi-dev --build-arg PORT=8000 .`
-`docker run -it --env-file .env --rm -p 8000:8000 kagi-dev`
+`docker-compose up`
 
 ## Design Outline
 
@@ -35,18 +33,26 @@ To persist data, I will likely be using SQLite, because it is very easy to use a
 
 For authentication, I only need something simple and will be using permanent cookies to store a unique user id
 
-To deploy it, I will be developing using nix, and running the environment inside a nixos docker image in gcr. I already have a domain name I can use under google cloud provider, so I will provision a subdomain for it to use.
+To deploy it, I be running it inside a docker image in gcr. I already have a domain name I can use under google cloud provider, so I will provision a subdomain for it to use.
 
 Routing structure:
 
+├──
+└──
+
 ```md
-/ -> html page where user can input a link to edit
-/http... -> redirects to /edit, as if user had just input the link
-/rss/... -> rss feeds
-/edit/... -> html page for creating rss feeds
-/auth/... -> authn functions
-/user/... -> crud operations for created user feeds
-/proxy/... -> proxy page for iframe, so i can get around same-origin policy
+/                  -> html page where user can input a link to edit
+/http...           -> redirects to /edit, as if user had just input the link
+/rss/
+  ├── /create      -> db interface route
+  ├── /delete         ^
+  ├── /edit           ^
+  ├── /preview     -> preview articles for given rss data
+  └── /feed        -> get the rss file for a feed
+/edit              -> html page for the user to create an rss feed
+  └── /gen         -> generate inital feed data from html using an LLM 
+/user              -> user interface for editing/deleting feeds
+/proxy             -> proxy page for iframe, so i can get around same-origin policy
 ```
 
 The backend uses lxml to extract data from the provided page using css queries. To create a feed, the user will direct the frontend to submit css queries to the backend, which are stored in the database. Every time an rss endpoint with a specific id recieves a request, the backend will find the css queries associated with the id in the database, use the queries on the website, and then return the items, formatted into an xml document with jinja.
@@ -106,6 +112,10 @@ data schema:
     - secrets managment
   - [ ] js bundler/minifiers & other file compression
 - [ ] deploy to cloud
+  - [x] docker compose file
+  - [x] use only db path accross project
+  - [x] store db in volume in docker
+  - [ ] GCP cloud storage bucket
 - [ ] test with RSS reader
 - [ ] extra feature: atom feed compatibility (is this already compatible with atom feeds?)
 

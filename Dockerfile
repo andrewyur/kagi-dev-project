@@ -8,8 +8,12 @@ WORKDIR /app
 
 RUN uv sync --frozen
 
+# port and db path arguments
 ARG PORT
 ENV PORT=${PORT}
+
+ARG DB_PATH
+ENV DB_PATH=${DB_PATH}
 
 CMD ["uv", "run", "prod"]
 
